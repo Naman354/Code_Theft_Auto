@@ -1,0 +1,57 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- MODELS ---
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  teamId    String? // Nullable kyunki shuru mein team nahi hogi
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  team Team? @relation(fields: [teamId], references: [id])
+}
+
+model Team {
+  id           String   @id @default(uuid())
+  teamName     String   @unique
+  accessCode   String   @unique
+  totalPoints  Int      @default(0)
+  currentLevel Int      @default(1)
+  isFinalist   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  members     User[]
+  submissions Submission[]
+}
+
+model Level {
+  id           String  @id @default(uuid())
+  levelNumber  Int     @unique
+  type         String // e.g., "Aptitude", "Debugging"
+  questionData Json // JSON format mein alag-alag type ke questions
+  answerHash   String // Hashed answer
+  clue1        String?
+  clue2        String?
+}
+
+model Submission {
+  id            String   @id @default(uuid())
+  teamId        String
+  levelNumber   Int
+  pointsAwarded Int
+  cluesUsed     Int      @default(0)
+  isSolved      Boolean
+  submittedAt   DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id])
+}
