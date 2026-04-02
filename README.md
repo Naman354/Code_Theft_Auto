@@ -21,8 +21,6 @@ npm install
 
 ```env
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<db-name>
-# Optional: used by /api/admin/migrate-users
-LEGACY_USERS_COLLECTION=legacy_users
 ```
 
 3. Run dev server:
@@ -33,20 +31,12 @@ npm run dev
 
 ## API Routes
 
-- `POST /api/auth/login`
-  - Body: `{ "email": "user@example.com", "accessCode": "GTA-ABCDE" }`
-  - `accessCode` is optional; if provided and valid, user gets assigned to that team.
-
-- `POST /api/admin/generate-teams`
-  - Body: `{ "teamSize": 4 }` (optional, default 4)
-  - Creates teams from unassigned users and assigns users to teams.
-
-- `POST /api/admin/migrate-users`
-  - Migrates users from `LEGACY_USERS_COLLECTION` into primary `User` collection.
+The backend API is being rebuilt around direct team signup/login and contest state routes.
+Legacy registration-import, auto-team-generation, and email/access-code login endpoints
+have been removed.
 
 ## Data Models
 
-- `User`: name, email, teamId, isAdmin, createdAt
 - `Team`: teamName, accessCode, totalPoints, currentLevel, isFinalist, createdAt
 - `Level`: levelNumber, type, questionData, answerHash, clue1, clue2
 - `Submission`: teamId, levelNumber, pointsAwarded, cluesUsed, isSolved, submittedAt
