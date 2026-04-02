@@ -1,20 +1,76 @@
 import mongoose, { InferSchemaType, Model, Schema } from "mongoose";
 
+const teamMemberSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    studentNumber: {
+      type: String,
+      required: true,
+      trim: true,
+      match: /^\d{7,8}$/,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+const teamLevelStateSchema = new Schema(
+  {
+    levelNumber: { type: Number, required: true, min: 1 },
+    status: {
+      type: String,
+      enum: ["not_started", "active", "solved", "expired"],
+      default: "not_started",
+    },
+    lockedScore: { type: Number, default: 0, min: 0 },
+    solvedAt: { type: Date, default: null },
+    expiredAt: { type: Date, default: null },
+    clue1PenaltyApplied: { type: Boolean, default: false },
+    clue1PenaltyAppliedAt: { type: Date, default: null },
+    clue2PenaltyApplied: { type: Boolean, default: false },
+    clue2PenaltyAppliedAt: { type: Date, default: null },
+  },
+  {
+    _id: false,
+  },
+);
+
 const teamSchema = new Schema(
   {
     teamName: { type: String, required: true, unique: true, trim: true },
-    accessCode: { type: String, required: true, unique: true, trim: true },
-    totalPoints: { type: Number, default: 0 },
+    teamNameNormalized: { type: String, required: true, unique: true, trim: true },
+    passwordHash: { type: String, required: true },
+    members: {
+      type: [teamMemberSchema],
+      required: true,
+      validate: {
+        validator: (members: Array<{ studentNumber: string }>) => {
+          if (members.length === 0) {
+            return false;
+          }
+
+          const uniqueStudentNumbers = new Set(
+            members.map((member) => member.studentNumber.trim()),
+          );
+
+          return uniqueStudentNumbers.size === members.length;
+        },
+        message: "Each member must have a unique student number.",
+      },
+    },
+    totalLockedScore: { type: Number, default: 0, min: 0 },
     currentLevel: { type: Number, default: 1 },
-    isFinalist: { type: Boolean, default: false },
+    levelStates: { type: [teamLevelStateSchema], default: [] },
+    lastLoginAt: { type: Date, default: null },
   },
   {
-    timestamps: { createdAt: true, updatedAt: false },
+    timestamps: true,
   },
 );
 
 teamSchema.index({ teamName: 1 }, { unique: true });
-teamSchema.index({ accessCode: 1 }, { unique: true });
+teamSchema.index({ teamNameNormalized: 1 }, { unique: true });
 
 type Team = InferSchemaType<typeof teamSchema>;
 
