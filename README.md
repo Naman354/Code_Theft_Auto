@@ -37,6 +37,7 @@ have been removed.
 
 ## Data Models
 
-- `Team`: teamName, accessCode, totalPoints, currentLevel, isFinalist, createdAt
-- `Level`: levelNumber, type, questionData, answerHash, clue1, clue2
-- `Submission`: teamId, levelNumber, pointsAwarded, cluesUsed, isSolved, submittedAt
+- `Team`: unique team name, normalized team name, password hash, members, total locked score, current level, per-level state, last login timestamps
+- `Level`: level number, question, answer, two clues, and per-level scoring/timer configuration
+- `ContestState`: singleton global contest status, active level, level timer, and default scoring configuration
+- `Submission`: per-team answer attempts with correctness, locked score snapshot, clue penalty snapshot, and response time
