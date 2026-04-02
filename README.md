@@ -49,7 +49,7 @@ npm run dev
   - Returns the current level question, visible clues, and the computed contest state for the team.
 
 - `POST /api/team/submit-answer`
-  - Validates the submitted answer, records the attempt, and locks the score when the answer is correct.
+  - Validates the submitted answer and locks the score when the answer is correct.
 
 - `GET /api/admin/contest-state`
   - Returns the global contest state.
@@ -65,4 +65,4 @@ npm run dev
 - `Team`: unique team name, normalized team name, password hash, members, total locked score, current level, per-level state, last login timestamps
 - `Level`: level number, question, answer, two clues, and per-level scoring/timer configuration
 - `ContestState`: singleton global contest status, active level, level timer, and default scoring configuration
-- `Submission`: per-team answer attempts with correctness, locked score snapshot, clue penalty snapshot, and response time
+- `Submission`: per-team final locked result per level, with the locked score snapshot, clue penalty snapshot, and response time

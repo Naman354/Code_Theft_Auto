@@ -65,21 +65,6 @@ export async function POST(req: Request) {
       now,
     });
 
-    const lockedScore = isCorrect ? scoringSnapshot.liveScore : 0;
-
-    await Submission.create({
-      teamId: team._id,
-      levelNumber: contestState.currentLevel,
-      submittedAnswer,
-      submittedAnswerNormalized,
-      isCorrect,
-      lockedScore,
-      clue1PenaltyApplied: levelState.clue1PenaltyApplied,
-      clue2PenaltyApplied: levelState.clue2PenaltyApplied,
-      responseTimeSeconds: scoringSnapshot.responseTimeSeconds,
-      submittedAt: now,
-    });
-
     if (!isCorrect) {
       return NextResponse.json({
         success: true,
@@ -93,12 +78,27 @@ export async function POST(req: Request) {
       });
     }
 
+    const lockedScore = scoringSnapshot.liveScore;
+
     levelState.status = "solved";
     levelState.lockedScore = lockedScore;
     levelState.solvedAt = now;
     team.totalLockedScore += lockedScore;
     team.currentLevel = Math.min(contestState.currentLevel + 1, contestState.totalLevels);
     await team.save();
+
+    await Submission.create({
+      teamId: team._id,
+      levelNumber: contestState.currentLevel,
+      submittedAnswer,
+      submittedAnswerNormalized,
+      isCorrect: true,
+      lockedScore,
+      clue1PenaltyApplied: levelState.clue1PenaltyApplied,
+      clue2PenaltyApplied: levelState.clue2PenaltyApplied,
+      responseTimeSeconds: scoringSnapshot.responseTimeSeconds,
+      submittedAt: now,
+    });
 
     return NextResponse.json({
       success: true,
