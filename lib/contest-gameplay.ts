@@ -1,4 +1,5 @@
 import Level from "@/models/Level";
+import Submission from "@/models/Submission";
 import type ContestState from "@/models/ContestState";
 import type Team from "@/models/Team";
 
@@ -32,6 +33,10 @@ function getTimeRemainingSeconds(levelEndsAt: Date | null, now: Date) {
 
 function calculateTimeDecay(elapsedSeconds: number, gracePeriodSeconds: number, decayPerSecond: number) {
   return Math.max(0, elapsedSeconds - gracePeriodSeconds) * decayPerSecond;
+}
+
+export function normalizeAnswer(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 export function getOrCreateTeamLevelState(team: InstanceType<typeof Team>, levelNumber: number) {
@@ -118,6 +123,38 @@ export async function syncTeamProgressForCurrentLevel(
     await team.save();
   }
 
+  if (levelState.status === "expired") {
+    const scoringSnapshot = buildScoringSnapshot({
+      contestState,
+      levelState,
+      now,
+    });
+
+    await Submission.findOneAndUpdate(
+      {
+        teamId: team._id,
+        levelNumber: contestState.currentLevel,
+      },
+      {
+        $setOnInsert: {
+          resultType: "expired",
+          submittedAnswer: null,
+          submittedAnswerNormalized: null,
+          isCorrect: false,
+          lockedScore: 0,
+          clue1PenaltyApplied: levelState.clue1PenaltyApplied,
+          clue2PenaltyApplied: levelState.clue2PenaltyApplied,
+          responseTimeSeconds: scoringSnapshot.responseTimeSeconds,
+          submittedAt: now,
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+      },
+    );
+  }
+
   return levelState;
 }
 
@@ -191,5 +228,34 @@ export function buildCurrentQuestionState(params: {
           clue2: clue2Visible ? level.clue2 : null,
         }
       : null,
+  };
+}
+
+export function buildScoringSnapshot(params: {
+  contestState: InstanceType<typeof ContestState>;
+  levelState: ReturnType<typeof getOrCreateTeamLevelState>;
+  now?: Date;
+}) {
+  const { contestState, levelState } = params;
+  const now = params.now ?? new Date();
+
+  const elapsedSeconds = getElapsedSeconds(contestState.levelStartedAt ?? null, now);
+  const responseTimeSeconds = Math.min(elapsedSeconds, contestState.durationSeconds);
+  const timeDecay = calculateTimeDecay(
+    responseTimeSeconds,
+    contestState.gracePeriodSeconds,
+    contestState.decayPerSecond,
+  );
+  const cluePenaltyTotal =
+    (levelState.clue1PenaltyApplied ? contestState.clue1Penalty : 0) +
+    (levelState.clue2PenaltyApplied ? contestState.clue2Penalty : 0);
+  const liveScore = Math.max(0, contestState.maxPointsPerQuestion - timeDecay - cluePenaltyTotal);
+
+  return {
+    elapsedSeconds,
+    responseTimeSeconds,
+    timeDecay,
+    cluePenaltyTotal,
+    liveScore,
   };
 }
