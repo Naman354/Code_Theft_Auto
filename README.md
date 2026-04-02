@@ -22,6 +22,7 @@ npm install
 ```env
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<db-name>
 TEAM_SESSION_SECRET=replace-this-with-a-long-random-secret
+ADMIN_API_SECRET=replace-this-with-a-separate-admin-secret
 ```
 
 3. Run dev server:
@@ -40,6 +41,21 @@ npm run dev
 
 - `POST /api/team/logout`
   - Clears the current team session cookie.
+
+- `GET /api/team/state`
+  - Returns the authenticated team state, timer snapshot, level status, and live score preview.
+
+- `GET /api/team/current-question`
+  - Returns the current level question, visible clues, and the computed contest state for the team.
+
+- `GET /api/admin/contest-state`
+  - Returns the global contest state.
+
+- `POST /api/admin/start-level`
+  - Starts a specific level, or the current level if none is provided.
+
+- `POST /api/admin/next-level`
+  - Advances the contest to the next level and starts its timer immediately.
 
 ## Data Models
 
