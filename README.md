@@ -21,6 +21,7 @@ npm install
 
 ```env
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<db-name>
+TEAM_SESSION_SECRET=replace-this-with-a-long-random-secret
 ```
 
 3. Run dev server:
@@ -31,9 +32,14 @@ npm run dev
 
 ## API Routes
 
-The backend API is being rebuilt around direct team signup/login and contest state routes.
-Legacy registration-import, auto-team-generation, and email/access-code login endpoints
-have been removed.
+- `POST /api/team/signup`
+  - Creates a team with a unique manually entered team name, compulsory password, and member list.
+
+- `POST /api/team/login`
+  - Restores an existing team session using team name and password.
+
+- `POST /api/team/logout`
+  - Clears the current team session cookie.
 
 ## Data Models
 
