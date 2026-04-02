@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import Team from "@/models/Team";
 import User from "@/models/User";
+import { Types } from "mongoose";
+
+const TEAM_SIZE = 5;
 
 type MinimalUser = {
-  _id: string;
+  _id: Types.ObjectId;
 };
 
 function shuffleArray<T>(array: T[]) {
@@ -19,47 +22,76 @@ function generateAccessCode() {
   return `GTA-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 }
 
-function generateTeamName() {
-  return `Phantom_Squad_${Math.floor(Math.random() * 9000) + 1000}`;
-}
+async function getNextTeamNumber() {
+  const existingTeams = await Team.find({ teamName: /^team-\d+$/i })
+    .select("teamName")
+    .lean();
 
-async function createUniqueTeam() {
-  for (let attempt = 0; attempt < 10; attempt++) {
-    try {
-      return await Team.create({
-        teamName: generateTeamName(),
-        accessCode: generateAccessCode(),
-      });
-    } catch {
-      // Retry on potential duplicate key collision.
+  let maxTeamNumber = 0;
+
+  for (const team of existingTeams) {
+    const match = /^team-(\d+)$/i.exec(team.teamName);
+    if (!match) continue;
+
+    const teamNumber = Number.parseInt(match[1], 10);
+    if (teamNumber > maxTeamNumber) {
+      maxTeamNumber = teamNumber;
     }
   }
 
-  throw new Error("Could not generate a unique team name/access code.");
+  return maxTeamNumber + 1;
+}
+
+async function createUniqueTeam(startingTeamNumber: number) {
+  let teamNumber = startingTeamNumber;
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try {
+      return await Team.create({
+        teamName: `team-${teamNumber}`,
+        accessCode: generateAccessCode(),
+      });
+    } catch (error) {
+      const duplicateError =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === 11000;
+
+      if (!duplicateError) {
+        throw error;
+      }
+
+      const duplicateKey =
+        typeof error === "object" &&
+        error !== null &&
+        "keyPattern" in error &&
+        typeof error.keyPattern === "object" &&
+        error.keyPattern !== null
+          ? error.keyPattern
+          : null;
+
+      if (duplicateKey && "teamName" in duplicateKey) {
+        teamNumber++;
+      }
+    }
+  }
+
+  throw new Error("Could not generate a unique team/access code.");
 }
 
 export async function POST(req: Request) {
   try {
     await connectToDatabase();
 
-    const body = await req.json().catch(() => ({}));
-    const parsedTeamSize = Number.parseInt(String(body.teamSize ?? "4"), 10);
-    const targetTeamSize = Number.isFinite(parsedTeamSize) ? parsedTeamSize : 4;
-
-    if (targetTeamSize < 2) {
-      return NextResponse.json(
-        { error: "teamSize must be at least 2." },
-        { status: 400 },
-      );
-    }
+    await req.json().catch(() => ({}));
 
     const unassignedUsers = (await User.find({ teamId: null })
-      .select("_id")
-      .lean()) as MinimalUser[];
+      .select("_id").lean()) as MinimalUser[];
 
-    if (unassignedUsers.length < targetTeamSize) {
+    if (unassignedUsers.length < TEAM_SIZE) {
       return NextResponse.json(
-        { error: `Not enough students! Need at least ${targetTeamSize} to form a team.` },
+        { error: `Not enough students! Need at least ${TEAM_SIZE} to form a team.` },
         { status: 400 },
       );
     }
@@ -67,30 +99,37 @@ export async function POST(req: Request) {
     const shuffledUsers = shuffleArray([...unassignedUsers]);
 
     const teamChunks: MinimalUser[][] = [];
-    for (let i = 0; i < shuffledUsers.length; i += targetTeamSize) {
-      teamChunks.push(shuffledUsers.slice(i, i + targetTeamSize));
+    for (let i = 0; i < shuffledUsers.length; i += TEAM_SIZE) {
+      teamChunks.push(shuffledUsers.slice(i, i + TEAM_SIZE));
     }
 
-    if (
-      teamChunks.length > 1 &&
-      teamChunks[teamChunks.length - 1].length < Math.max(2, targetTeamSize - 1)
-    ) {
+    if (teamChunks.length > 1 && teamChunks[teamChunks.length - 1].length < 4) {
       const lastSmallChunk = teamChunks.pop();
-      let distributeIndex = 0;
 
       if (lastSmallChunk) {
-        for (const user of lastSmallChunk) {
-          teamChunks[distributeIndex % teamChunks.length].push(user);
-          distributeIndex++;
+        const eligibleTeamIndexes = shuffleArray(teamChunks.map((_, index) => index));
+
+        if (eligibleTeamIndexes.length >= lastSmallChunk.length) {
+          for (const [index, user] of lastSmallChunk.entries()) {
+            teamChunks[eligibleTeamIndexes[index]].push(user);
+          }
+        } else {
+          teamChunks.push(lastSmallChunk);
         }
       }
     }
 
     const createdTeams: Array<{ teamName: string; size: number }> = [];
+    let nextTeamNumber = await getNextTeamNumber();
 
     for (const teamMembers of teamChunks) {
-      const team = await createUniqueTeam();
+      const team = await createUniqueTeam(nextTeamNumber);
       const memberIds = teamMembers.map((user) => user._id);
+
+      const teamNumberMatch = /^team-(\d+)$/i.exec(team.teamName);
+      if (teamNumberMatch) {
+        nextTeamNumber = Number.parseInt(teamNumberMatch[1], 10) + 1;
+      }
 
       await User.updateMany(
         { _id: { $in: memberIds } },
@@ -106,7 +145,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       message: `${teamChunks.length} teams generated successfully!`,
-      targetSizeRequested: targetTeamSize,
+      targetSizeRequested: TEAM_SIZE,
       teamsCreated: createdTeams,
     });
   } catch (error) {
