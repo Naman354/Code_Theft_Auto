@@ -1,4 +1,5 @@
 import Level from "@/models/Level";
+import Submission from "@/models/Submission";
 import type ContestState from "@/models/ContestState";
 import type Team from "@/models/Team";
 
@@ -120,6 +121,38 @@ export async function syncTeamProgressForCurrentLevel(
 
   if (hasChanges) {
     await team.save();
+  }
+
+  if (levelState.status === "expired") {
+    const scoringSnapshot = buildScoringSnapshot({
+      contestState,
+      levelState,
+      now,
+    });
+
+    await Submission.findOneAndUpdate(
+      {
+        teamId: team._id,
+        levelNumber: contestState.currentLevel,
+      },
+      {
+        $setOnInsert: {
+          resultType: "expired",
+          submittedAnswer: null,
+          submittedAnswerNormalized: null,
+          isCorrect: false,
+          lockedScore: 0,
+          clue1PenaltyApplied: levelState.clue1PenaltyApplied,
+          clue2PenaltyApplied: levelState.clue2PenaltyApplied,
+          responseTimeSeconds: scoringSnapshot.responseTimeSeconds,
+          submittedAt: now,
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+      },
+    );
   }
 
   return levelState;

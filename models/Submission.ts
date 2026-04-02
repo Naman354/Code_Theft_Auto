@@ -4,8 +4,13 @@ const submissionSchema = new Schema(
   {
     teamId: { type: Schema.Types.ObjectId, ref: "Team", required: true, index: true },
     levelNumber: { type: Number, required: true },
-    submittedAnswer: { type: String, required: true, trim: true },
-    submittedAnswerNormalized: { type: String, required: true, trim: true },
+    resultType: {
+      type: String,
+      enum: ["solved", "expired"],
+      required: true,
+    },
+    submittedAnswer: { type: String, default: null, trim: true },
+    submittedAnswerNormalized: { type: String, default: null, trim: true },
     isCorrect: { type: Boolean, required: true },
     lockedScore: { type: Number, required: true, min: 0 },
     clue1PenaltyApplied: { type: Boolean, required: true, default: false },
@@ -18,7 +23,7 @@ const submissionSchema = new Schema(
   },
 );
 
-submissionSchema.index({ teamId: 1, levelNumber: 1 });
+submissionSchema.index({ teamId: 1, levelNumber: 1 }, { unique: true });
 submissionSchema.index({ teamId: 1, levelNumber: 1, submittedAt: -1 });
 
 type Submission = InferSchemaType<typeof submissionSchema>;

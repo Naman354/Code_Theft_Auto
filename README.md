@@ -65,4 +65,4 @@ npm run dev
 - `Team`: unique team name, normalized team name, password hash, members, total locked score, current level, per-level state, last login timestamps
 - `Level`: level number, question, answer, two clues, and per-level scoring/timer configuration
 - `ContestState`: singleton global contest status, active level, level timer, and default scoring configuration
-- `Submission`: per-team final locked result per level, with the locked score snapshot, clue penalty snapshot, and response time
+- `Submission`: one final locked result per team per level, either `solved` or `expired`, with the locked score snapshot, clue penalty snapshot, and response time

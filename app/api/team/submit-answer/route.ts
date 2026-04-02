@@ -90,6 +90,7 @@ export async function POST(req: Request) {
     await Submission.create({
       teamId: team._id,
       levelNumber: contestState.currentLevel,
+      resultType: "solved",
       submittedAnswer,
       submittedAnswerNormalized,
       isCorrect: true,
