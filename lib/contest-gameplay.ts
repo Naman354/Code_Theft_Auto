@@ -34,6 +34,10 @@ function calculateTimeDecay(elapsedSeconds: number, gracePeriodSeconds: number, 
   return Math.max(0, elapsedSeconds - gracePeriodSeconds) * decayPerSecond;
 }
 
+export function normalizeAnswer(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export function getOrCreateTeamLevelState(team: InstanceType<typeof Team>, levelNumber: number) {
   const existingState = team.levelStates.find((levelState) => levelState.levelNumber === levelNumber);
 
@@ -191,5 +195,34 @@ export function buildCurrentQuestionState(params: {
           clue2: clue2Visible ? level.clue2 : null,
         }
       : null,
+  };
+}
+
+export function buildScoringSnapshot(params: {
+  contestState: InstanceType<typeof ContestState>;
+  levelState: ReturnType<typeof getOrCreateTeamLevelState>;
+  now?: Date;
+}) {
+  const { contestState, levelState } = params;
+  const now = params.now ?? new Date();
+
+  const elapsedSeconds = getElapsedSeconds(contestState.levelStartedAt ?? null, now);
+  const responseTimeSeconds = Math.min(elapsedSeconds, contestState.durationSeconds);
+  const timeDecay = calculateTimeDecay(
+    responseTimeSeconds,
+    contestState.gracePeriodSeconds,
+    contestState.decayPerSecond,
+  );
+  const cluePenaltyTotal =
+    (levelState.clue1PenaltyApplied ? contestState.clue1Penalty : 0) +
+    (levelState.clue2PenaltyApplied ? contestState.clue2Penalty : 0);
+  const liveScore = Math.max(0, contestState.maxPointsPerQuestion - timeDecay - cluePenaltyTotal);
+
+  return {
+    elapsedSeconds,
+    responseTimeSeconds,
+    timeDecay,
+    cluePenaltyTotal,
+    liveScore,
   };
 }

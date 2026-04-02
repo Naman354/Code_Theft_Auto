@@ -48,6 +48,9 @@ npm run dev
 - `GET /api/team/current-question`
   - Returns the current level question, visible clues, and the computed contest state for the team.
 
+- `POST /api/team/submit-answer`
+  - Validates the submitted answer, records the attempt, and locks the score when the answer is correct.
+
 - `GET /api/admin/contest-state`
   - Returns the global contest state.
 
