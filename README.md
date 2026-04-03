@@ -92,7 +92,57 @@ npm run dev
 | `/api/admin/next-level` | `POST` | Advances the global contest to the next phase. |
 | `/api/admin/seed-levels` | `POST` | Bulk-uploads Level data (Overwrites existing). |
 
-#### Body for `/api/admin/seed-levels`:
+#### 1. `GET /api/admin/contest-state`
+**Response:**
+```json
+{
+  "success": true,
+  "contestState": {
+    "status": "idle",
+    "totalLevels": 10,
+    "currentLevel": 1,
+    "levelStartedAt": "2026-04-03T10:00:00Z",
+    "levelEndsAt": "2026-04-03T10:15:00Z",
+    "maxPointsPerQuestion": 1000,
+    "gracePeriodSeconds": 30,
+    "durationSeconds": 900,
+    "decayPerSecond": 1,
+    "clue1UnlockSeconds": 300,
+    "clue1Penalty": 150,
+    "clue2UnlockSeconds": 600,
+    "clue2Penalty": 250
+  }
+}
+```
+
+#### 2. `POST /api/admin/start-level`
+**Request Body:**
+```json
+{ "level": 1 } 
+```
+*(Optional: Omit `level` to start the next one)*
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Level 1 started successfully.",
+  "contestState": { "status": "running", "currentLevel": 1, "levelEndsAt": "..." }
+}
+```
+
+#### 3. `POST /api/admin/next-level`
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Level 2 started successfully.",
+  "contestState": { "status": "running", "currentLevel": 2, "levelEndsAt": "..." }
+}
+```
+
+#### 4. `POST /api/admin/seed-levels`
+**Request Body:**
 ```json
 {
   "levels": [
@@ -101,11 +151,15 @@ npm run dev
       "question": "Reverse a linked list...",
       "answer": "ans123",
       "clue1": "Use three pointers...",
+      "clue2": "Second clue here...",
       "maxPoints": 1000,
       "gracePeriodSeconds": 30,
+      "durationSeconds": 900,
       "decayPerSecond": 1,
-      "clue1UnlockSeconds": 120,
-      "clue1Penalty": 150
+      "clue1UnlockSeconds": 300,
+      "clue1Penalty": 150,
+      "clue2UnlockSeconds": 600,
+      "clue2Penalty": 250
     }
   ]
 }
@@ -115,22 +169,125 @@ npm run dev
 
 ### 👥 Team Routes
 
-| Route | Method | Auth | Required Fields |
-|-------|--------|------|-----------------|
-| `/api/team/signup` | `POST` | None | `teamName`, `password`, `studentNumbers[]` |
-| `/api/team/login` | `POST` | None | `teamName`, `password` |
-| `/api/team/logout` | `POST` | Cookie | None |
-| `/api/team/state` | `GET` | Cookie | None (returns live status/timer) |
-| `/api/team/current-question` | `GET` | Cookie | None (returns question/clues) |
-| `/api/team/submit-answer` | `POST` | Cookie | `answer` |
+| Route | Method | Auth |
+|-------|--------|------|
+| `/api/team/signup` | `POST` | None |
+| `/api/team/login` | `POST` | None |
+| `/api/team/logout` | `POST` | Cookie |
+| `/api/team/state` | `GET` | Cookie |
+| `/api/team/current-question` | `GET` | Cookie |
+| `/api/team/submit-answer` | `POST` | Cookie |
+
+#### 1. `POST /api/team/signup`
+**Request Body (Option A - Object List):**
+```json
+{
+  "teamName": "TeamAlpha",
+  "password": "securePass123",
+  "members": [
+    { "studentNumber": "2510001" },
+    { "studentNumber": "2510002" }
+  ]
+}
+```
+**Request Body (Option B - String List):**
+```json
+{
+  "teamName": "TeamAlpha",
+  "password": "securePass123",
+  "studentNumbers": ["2510001", "2510002"]
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "team": { "id": "...", "teamName": "TeamAlpha", "teamNumber": 12 }
+}
+```
+
+#### 2. `POST /api/team/login`
+**Request Body:**
+```json
+{ "teamName": "TeamAlpha", "password": "securePass123" }
+```
+**Response:**
+```json
+{
+  "success": true,
+  "team": { "id": "...", "teamName": "TeamAlpha", "teamNumber": 12 }
+}
+```
+
+#### 3. `POST /api/team/logout`
+**Response:**
+```json
+{ "success": true }
+```
+
+#### 4. `GET /api/team/state`
+**Response:**
+```json
+{
+  "success": true,
+  "state": {
+    "contestStatus": "running",
+    "currentLevel": 1,
+    "teamCurrentLevel": 1,
+    "levelState": { "status": "active", "clue1PenaltyApplied": false },
+    "totalLockedScore": 4500,
+    "timer": { "levelEndsAt": "...", "timeRemainingSeconds": 420 },
+    "scoring": { "liveScore": 850, "timeDecay": 50, "cluePenaltyTotal": 0 }
+  }
+}
+```
+
+#### 5. `GET /api/team/current-question`
+**Response:**
+```json
+{
+  "success": true,
+  "currentQuestion": {
+    "levelNumber": 1,
+    "question": "Reverse a linked list...",
+    "clue1": "Use three pointers...",
+    "clue2": null 
+  },
+  "state": { "contestStatus": "running", "scoring": { "liveScore": 850 } }
+}
+```
+
+#### 6. `POST /api/team/submit-answer`
+**Request Body:**
+```json
+{ "answer": "Paris" }
+```
+**Response (Correct):**
+```json
+{
+  "success": true,
+  "isCorrect": true,
+  "lockedScore": 850,
+  "state": { "nextLevel": 2, "totalLockedScore": 5350 }
+}
+```
 
 ---
 
 ### 🏆 Public Routes
 
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/leaderboard` | `GET` | returns top ranked teams. |
+#### 1. `GET /api/leaderboard`
+**Query Params:** `?limit=5`
+**Response:**
+```json
+{
+  "success": true,
+  "leaderboard": [
+    { "rank": 1, "teamName": "TeamAlpha", "totalLockedScore": 5350, "currentLevel": 2 },
+    { "rank": 2, "teamName": "TeamBeta", "totalLockedScore": 4200, "currentLevel": 1 }
+  ]
+}
+```
 
 ---
 
