@@ -23,6 +23,9 @@ npm install
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<db-name>
 TEAM_SESSION_SECRET=replace-this-with-a-long-random-secret
 ADMIN_API_SECRET=replace-this-with-a-separate-admin-secret
+TEAM_MAX_MEMBER_COUNT=6
+TEAM_MIN_PASSWORD_LENGTH=6
+TEAM_MAX_TEAM_NAME_LENGTH=80
 ```
 
 3. Run dev server:
@@ -50,6 +53,9 @@ npm run dev
 
 - `POST /api/team/submit-answer`
   - Validates the submitted answer and locks the score when the answer is correct.
+
+- `GET /api/leaderboard`
+  - Returns a read-only leaderboard based only on locked scores, capped at the top 10 teams.
 
 - `GET /api/admin/contest-state`
   - Returns the global contest state.

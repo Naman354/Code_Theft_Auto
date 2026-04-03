@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureAdminAccess } from "@/lib/admin-auth";
 import { getOrCreateContestState } from "@/lib/contest-state";
+import Level from "@/models/Level";
 import { connectToDatabase } from "@/lib/mongodb";
 
 export async function POST(request: Request) {
@@ -28,6 +29,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Requested level exceeds the configured total levels." },
         { status: 400 },
+      );
+    }
+
+    const levelExists = await Level.exists({ levelNumber: levelToStart });
+
+    if (!levelExists) {
+      return NextResponse.json(
+        { error: `Level ${levelToStart} has not been configured yet.` },
+        { status: 404 },
       );
     }
 

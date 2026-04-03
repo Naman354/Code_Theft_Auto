@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
+import {
+  getMaxTeamNameLength,
+  getMinPasswordLength,
+  getRequiredTeamMemberCount,
+} from "@/lib/contest-config";
 import { connectToDatabase } from "@/lib/mongodb";
+import { isDuplicateKeyError } from "@/lib/mongoose-errors";
 import { hashPassword, isValidStudentNumber, normalizeTeamName } from "@/lib/team-auth";
 import { setTeamSessionCookie } from "@/lib/team-session";
 import Team from "@/models/Team";
@@ -29,12 +35,26 @@ function validateSignupInput(teamName: string, password: string, members: Signup
     return "Team name is required.";
   }
 
+  if (teamName.length > getMaxTeamNameLength()) {
+    return `Team name must be at most ${getMaxTeamNameLength()} characters long.`;
+  }
+
   if (!password) {
     return "Password is required.";
   }
 
+  if (password.length < getMinPasswordLength()) {
+    return `Password must be at least ${getMinPasswordLength()} characters long.`;
+  }
+
   if (members.length === 0) {
     return "At least one team member is required.";
+  }
+
+  const requiredTeamMemberCount = getRequiredTeamMemberCount();
+
+  if (requiredTeamMemberCount !== null && members.length > requiredTeamMemberCount) {
+    return `Each team can have at most ${requiredTeamMemberCount} members.`;
   }
 
   for (const member of members) {
@@ -117,6 +137,13 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error) {
+    if (isDuplicateKeyError(error)) {
+      return NextResponse.json(
+        { error: "A team with this name already exists." },
+        { status: 409 },
+      );
+    }
+
     console.error("Team Signup Error:", error);
     return NextResponse.json({ error: "Failed to sign up team." }, { status: 500 });
   }
