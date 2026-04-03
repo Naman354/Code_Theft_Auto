@@ -6,76 +6,49 @@ import {
 } from "@/lib/contest-config";
 import { connectToDatabase } from "@/lib/mongodb";
 import { isDuplicateKeyError } from "@/lib/mongoose-errors";
-import { hashPassword, isValidStudentNumber, normalizeTeamName } from "@/lib/team-auth";
+import { hashPassword, normalizeTeamName } from "@/lib/team-auth";
 import { setTeamSessionCookie } from "@/lib/team-session";
-import Team from "@/models/Team";
+import TeamModel from "@/models/Team";
+import UserModel from "@/models/User"; // Day 1 Database
 
-type SignupMember = {
-  name?: string;
-  studentNumber?: string;
-};
-
-function sanitizeMembers(members: unknown) {
-  if (!Array.isArray(members)) {
-    return [];
-  }
-
-  return members.map((member) => {
-    const typedMember = (member ?? {}) as SignupMember;
-
-    return {
-      name: String(typedMember.name ?? "").trim(),
-      studentNumber: String(typedMember.studentNumber ?? "").trim(),
-    };
-  });
+// Helper to extract clean student numbers from frontend request
+function extractStudentNumbers(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  
+  return input.map(item => {
+    // Check if frontend sent array of objects [{studentNumber: "25..."}] or array of strings ["25..."]
+    if (typeof item === 'object' && item !== null && 'studentNumber' in item) {
+      return String(item.studentNumber).trim();
+    }
+    return String(item).trim();
+  }).filter(Boolean);
 }
 
-function validateSignupInput(teamName: string, password: string, members: SignupMember[]) {
-  if (!teamName) {
-    return "Team name is required.";
-  }
-
+function validateSignupBasics(teamName: string, password: string, studentNumbers: string[]) {
+  if (!teamName) return "Team name is required.";
   if (teamName.length > getMaxTeamNameLength()) {
     return `Team name must be at most ${getMaxTeamNameLength()} characters long.`;
   }
-
-  if (!password) {
-    return "Password is required.";
-  }
-
+  if (!password) return "Password is required.";
   if (password.length < getMinPasswordLength()) {
     return `Password must be at least ${getMinPasswordLength()} characters long.`;
   }
+  if (studentNumbers.length === 0) return "At least one team member is required.";
 
-  if (members.length === 0) {
-    return "At least one team member is required.";
+  const requiredCount = getRequiredTeamMemberCount();
+  if (requiredCount !== null && studentNumbers.length > requiredCount) {
+    return `Each team can have at most ${requiredCount} members.`;
   }
 
-  const requiredTeamMemberCount = getRequiredTeamMemberCount();
-
-  if (requiredTeamMemberCount !== null && members.length > requiredTeamMemberCount) {
-    return `Each team can have at most ${requiredTeamMemberCount} members.`;
-  }
-
-  for (const member of members) {
-    if (!member.name?.trim()) {
-      return "Each team member must have a name.";
-    }
-
-    if (!member.studentNumber?.trim()) {
-      return "Each team member must have a student number.";
-    }
-
-    if (!isValidStudentNumber(member.studentNumber)) {
-      return "Student numbers must be 7 or 8 digits.";
+  const regex25 = /^25[0-9]{5,6}$/;
+  for (const num of studentNumbers) {
+    if (!regex25.test(num)) {
+      return `Invalid student number format (${num}). It must start with 25 and be 7 or 8 digits.`;
     }
   }
 
-  const uniqueStudentNumbers = new Set(
-    members.map((member) => String(member.studentNumber).trim()),
-  );
-
-  if (uniqueStudentNumbers.size !== members.length) {
+  const uniqueNumbers = new Set(studentNumbers);
+  if (uniqueNumbers.size !== studentNumbers.length) {
     return "Student numbers must be unique within a team.";
   }
 
@@ -89,17 +62,60 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const teamName = String(body.teamName ?? "").trim();
     const password = String(body.password ?? "");
-    const members = sanitizeMembers(body.members);
+    
+    // Extract array of student numbers (e.g. ["2510084", "2510085"])
+    // API will accept body.members OR body.studentNumbers from frontend
+    const rawMembers = body.studentNumbers || body.members || [];
+    const studentNumbers = extractStudentNumbers(rawMembers);
 
-    const validationError = validateSignupInput(teamName, password, members);
-
+    // 1. Basic formatting checks
+    const validationError = validateSignupBasics(teamName, password, studentNumbers);
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    const teamNameNormalized = normalizeTeamName(teamName);
+    // =========================================================
+    // 🛡️ SECURITY LOGIC: FETCH FROM DAY 1 DB (registrations)
+    // =========================================================
+    
+    // Find these students in Day 1 DB
+    const validStudents = await UserModel.find({
+      studentNumber: { $in: studentNumbers }
+    });
 
-    const existingTeam = await Team.exists({ teamNameNormalized });
+    // Check if any numbers are fake/unregistered
+    if (validStudents.length !== studentNumbers.length) {
+      const validNumbers = validStudents.map(s => s.studentNumber);
+      const invalidNumbers = studentNumbers.filter(num => !validNumbers.includes(num));
+
+      return NextResponse.json(
+        { error: `Access Denied! These Student Numbers are not registered for the event: ${invalidNumbers.join(", ")}` },
+        { status: 403 }
+      );
+    }
+
+    // Check if anyone is already in another team
+    const alreadyInATeam = await TeamModel.findOne({
+      "members.studentNumber": { $in: studentNumbers }
+    });
+
+    if (alreadyInATeam) {
+      return NextResponse.json(
+        { error: "Action Blocked: One or more students are already part of another team!" },
+        { status: 409 }
+      );
+    }
+
+    // 🎯 CREATE FINAL MEMBERS ARRAY (Student Number + Name from DB)
+    const finalizedMembers = validStudents.map(student => ({
+      name: student.name,
+      studentNumber: student.studentNumber
+    }));
+
+    // =========================================================
+
+    const teamNameNormalized = normalizeTeamName(teamName);
+    const existingTeam = await TeamModel.exists({ teamNameNormalized });
 
     if (existingTeam) {
       return NextResponse.json(
@@ -108,16 +124,30 @@ export async function POST(req: Request) {
       );
     }
 
-    const team = await Team.create({
+    // 1. Sabse highest teamNumber wali team dhoondo
+    const highestTeam = await TeamModel.findOne().sort({ teamNumber: -1 });
+    
+    // 2. Agar koi team nahi hai, toh 1 se start karo, warna +1 kar do
+    const nextTeamNumber = highestTeam ? highestTeam.teamNumber + 1 : 1;
+
+    // Create the Team
+    const team = await TeamModel.create({
       teamName,
       teamNameNormalized,
+      teamNumber: nextTeamNumber, // NAYA: Auto-assigned number
       passwordHash: hashPassword(password),
-      members,
+      members: finalizedMembers, // Has Name + StudentNumber
       totalLockedScore: 0,
       currentLevel: 1,
       levelStates: [],
       lastLoginAt: new Date(),
     });
+
+    // Link Team ID to the Students in the Day 1 DB
+    await UserModel.updateMany(
+      { studentNumber: { $in: studentNumbers } },
+      { $set: { teamId: team._id } }
+    );
 
     await setTeamSessionCookie(team._id.toString());
 
@@ -127,7 +157,7 @@ export async function POST(req: Request) {
         team: {
           id: team._id,
           teamName: team.teamName,
-          members: team.members,
+          members: team.members, 
           totalLockedScore: team.totalLockedScore,
           currentLevel: team.currentLevel,
           levelStates: team.levelStates,
@@ -137,6 +167,8 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error) {
+    console.log("🛑 ACTUAL MONGO ERROR:", error); // <-- YEH LINE ADD KAREIN
+
     if (isDuplicateKeyError(error)) {
       return NextResponse.json(
         { error: "A team with this name already exists." },
