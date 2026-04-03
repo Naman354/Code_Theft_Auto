@@ -51,6 +51,9 @@ npm run dev
 - `POST /api/team/submit-answer`
   - Validates the submitted answer and locks the score when the answer is correct.
 
+- `GET /api/leaderboard`
+  - Returns a read-only leaderboard based only on locked scores, capped at the top 10 teams.
+
 - `GET /api/admin/contest-state`
   - Returns the global contest state.
 
