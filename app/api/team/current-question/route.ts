@@ -17,6 +17,11 @@ export async function GET() {
     const contestState = await getOrCreateContestState();
     const levelState = await syncTeamProgressForCurrentLevel(team, contestState);
     const level = await getLevelForContest(contestState.currentLevel);
+
+    if (contestState.status === "running" && !level) {
+      return NextResponse.json({ error: "Current level question was not found." }, { status: 404 });
+    }
+
     const state = buildCurrentQuestionState({
       contestState,
       team,

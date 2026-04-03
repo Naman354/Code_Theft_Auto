@@ -7,6 +7,7 @@ import {
 } from "@/lib/contest-gameplay";
 import { getOrCreateContestState } from "@/lib/contest-state";
 import { connectToDatabase } from "@/lib/mongodb";
+import { isDuplicateKeyError } from "@/lib/mongoose-errors";
 import { getAuthenticatedTeam } from "@/lib/team-access";
 import Submission from "@/models/Submission";
 
@@ -115,6 +116,13 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
+    if (isDuplicateKeyError(error)) {
+      return NextResponse.json(
+        { error: "A final result has already been recorded for this level." },
+        { status: 409 },
+      );
+    }
+
     console.error("Submit Answer Error:", error);
     return NextResponse.json({ error: "Failed to submit answer." }, { status: 500 });
   }

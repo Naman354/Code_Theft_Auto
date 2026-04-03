@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getMinPasswordLength } from "@/lib/contest-config";
 import { connectToDatabase } from "@/lib/mongodb";
 import { normalizeTeamName, verifyPassword } from "@/lib/team-auth";
 import { setTeamSessionCookie } from "@/lib/team-session";
@@ -18,6 +19,10 @@ export async function POST(req: Request) {
 
     if (!password) {
       return NextResponse.json({ error: "Password is required." }, { status: 400 });
+    }
+
+    if (password.length < getMinPasswordLength()) {
+      return NextResponse.json({ error: "Invalid team name or password." }, { status: 401 });
     }
 
     const teamNameNormalized = normalizeTeamName(teamName);

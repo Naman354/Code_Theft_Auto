@@ -23,6 +23,9 @@ npm install
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<db-name>
 TEAM_SESSION_SECRET=replace-this-with-a-long-random-secret
 ADMIN_API_SECRET=replace-this-with-a-separate-admin-secret
+TEAM_MAX_MEMBER_COUNT=6
+TEAM_MIN_PASSWORD_LENGTH=6
+TEAM_MAX_TEAM_NAME_LENGTH=80
 ```
 
 3. Run dev server:

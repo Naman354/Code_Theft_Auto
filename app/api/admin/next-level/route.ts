@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureAdminAccess } from "@/lib/admin-auth";
 import { getOrCreateContestState } from "@/lib/contest-state";
+import Level from "@/models/Level";
 import { connectToDatabase } from "@/lib/mongodb";
 
 export async function POST(request: Request) {
@@ -32,6 +33,15 @@ export async function POST(request: Request) {
           levelEndsAt: contestState.levelEndsAt,
         },
       });
+    }
+
+    const nextLevelExists = await Level.exists({ levelNumber: nextLevel });
+
+    if (!nextLevelExists) {
+      return NextResponse.json(
+        { error: `Level ${nextLevel} has not been configured yet.` },
+        { status: 404 },
+      );
     }
 
     const levelStartedAt = new Date();
