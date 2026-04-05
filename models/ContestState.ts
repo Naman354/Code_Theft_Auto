@@ -8,7 +8,7 @@ const contestStateSchema = new Schema(
       enum: ["not_started", "running", "paused", "completed"],
       default: "not_started",
     },
-    totalLevels: { type: Number, required: true, default: 4, min: 1 },
+    totalLevels: { type: Number, required: true, default: 5, min: 1 },
     currentLevel: { type: Number, required: true, default: 1, min: 1 },
     levelStartedAt: { type: Date, default: null },
     levelEndsAt: { type: Date, default: null },
