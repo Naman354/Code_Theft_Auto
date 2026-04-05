@@ -222,11 +222,11 @@ export function buildCurrentQuestionState(params: {
     },
     question: level
       ? {
-          levelNumber: level.levelNumber,
-          question: level.question,
-          clue1: clue1Visible ? level.clue1 : null,
-          clue2: clue2Visible ? level.clue2 : null,
-        }
+        levelNumber: level.levelNumber,
+        question: level.question,
+        clue1: clue1Visible ? level.clue1 : null,
+        clue2: clue2Visible ? level.clue2 : null,
+      }
       : null,
   };
 }

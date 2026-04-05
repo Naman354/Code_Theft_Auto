@@ -7,7 +7,7 @@ const teamMemberSchema = new Schema(
       type: String,
       required: true,
       trim: true,
-      match: /^\d{7,8}$/,
+      match: /^25[0-9]{5,6}$/, // UPDATED: Must start with 25 and be 7 or 8 digits
     },
   },
   {
@@ -40,6 +40,7 @@ const teamSchema = new Schema(
   {
     teamName: { type: String, required: true, unique: true, trim: true },
     teamNameNormalized: { type: String, required: true, unique: true, trim: true },
+    teamNumber: { type: Number, required: true, unique: true },
     passwordHash: { type: String, required: true },
     members: {
       type: [teamMemberSchema],
@@ -69,8 +70,8 @@ const teamSchema = new Schema(
   },
 );
 
-teamSchema.index({ teamName: 1 }, { unique: true });
-teamSchema.index({ teamNameNormalized: 1 }, { unique: true });
+// teamSchema.index({ teamName: 1 }, { unique: true });
+// teamSchema.index({ teamNameNormalized: 1 }, { unique: true });
 
 type Team = InferSchemaType<typeof teamSchema>;
 

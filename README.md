@@ -1,74 +1,300 @@
-# Code Theft Auto
+# Code Theft Auto 🚗💨
 
-Next.js app for a team-based coding game. This project now uses **MongoDB + Mongoose only** (no Prisma/PostgreSQL).
+A high-stakes, team-based coding competition platform built with **Next.js 16** and **MongoDB**. Teams compete to solve algorithmic challenges under time pressure, navigating through levels of increasing difficulty while managing "score decay" and strategic clue reveals.
 
-## Tech Stack
+---
 
-- Next.js 16 (App Router)
-- TypeScript
-- Tailwind CSS 4
-- MongoDB + Mongoose
+## 🛠️ Tech Stack
 
-## Setup
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **Database**: MongoDB + Mongoose (uses a "Day 1" Registration database for student verification)
+- **Auth**: Iron Session (Team) & Secret Header (Admin)
 
-1. Install dependencies:
+---
 
-```bash
-npm install
-```
+## 🏁 Game Flow & Lifecycle
 
-2. Create `.env` file:
+The contest follows a structured lifecycle managed by the Admin and participated in by Teams.
+
+### 1. Preparation (Admin)
+The Admin populates the database with challenges using the `seed-levels` API. Each level contains the question, answer, and its specific scoring parameters (max points, decay rates, clue unlock times).
+
+### 2. Registration & Verification (Team)
+Teams sign up by choosing a name and providing the student numbers of their members.
+> **Verification**: The system checks the `registrations` collection (Day 1 database) to ensure every student number is valid and registered for the event. Fake or unregistered numbers will block the signup.
+
+### 3. Level Progression Loop
+- **Level Start**: The Admin triggers `start-level`. This sets the global timer for all teams.
+- **Active Phase**: Teams view the question and clues. 
+- **Scoring**: Points are calculated in real-time (see mechanics below).
+- **Submission**: Teams submit answers. A correct answer "locks" the live score for that team and that level.
+- **Next Level**: Once the duration expires or most teams have finished, the Admin moves to the `next-level`.
+
+---
+
+## 📊 Game Mechanics (Scoring & Decay)
+
+Performance is measured by speed and accuracy. The "Live Score" for an active question decreases over time.
+
+### 🛑 Point Reduction Rules
+1. **Initial Score**: Every question starts with a `maxPointsPerQuestion` (e.g., 1000).
+2. **Grace Period**: For the first `X` seconds (e.g., 30s), points do **not** decay.
+3. **Time Decay**: After the grace period, points decrease by a set `decayPerSecond`.
+   - `decayScore = (elapsedTime - gracePeriod) * decayRate`
+4. **Clue Penalties**: Clues become available automatically after a certain amount of time.
+   - **Clue 1**: Unlocks after `T1` seconds, applying `Penalty 1`.
+   - **Clue 2**: Unlocks after `T2` seconds, applying `Penalty 2`.
+   - *Note: These penalties are applied automatically as soon as the time threshold is passed.*
+
+### 🛡️ Final Score Calculation
+`Locked Score = Math.max(0, MaxPoints - DecayScore - AppliedPenalties)`
+
+---
+
+## ⚙️ Setup
+
+### 1. Environment Variables
+Create a `.env` file in the root directory:
 
 ```env
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<db-name>
-TEAM_SESSION_SECRET=replace-this-with-a-long-random-secret
-ADMIN_API_SECRET=replace-this-with-a-separate-admin-secret
+# MongoDB Connection
+MONGO_URI=mongodb+srv://...
+
+# Security Secrets
+TEAM_SESSION_SECRET=long-random-string-at-least-32-chars
+ADMIN_API_SECRET=your-admin-secret-header
+
+# Contest Defaults
 TEAM_MAX_MEMBER_COUNT=6
 TEAM_MIN_PASSWORD_LENGTH=6
 TEAM_MAX_TEAM_NAME_LENGTH=80
 ```
 
-3. Run dev server:
-
+### 2. Installation & Running
 ```bash
+npm install
 npm run dev
 ```
 
-## API Routes
+---
 
-- `POST /api/team/signup`
-  - Creates a team with a unique manually entered team name, compulsory password, and member list.
+## 📡 API Reference
 
-- `POST /api/team/login`
-  - Restores an existing team session using team name and password.
+### 🔐 Admin Routes
+*All require `x-admin-secret: <ADMIN_API_SECRET>` header.*
 
-- `POST /api/team/logout`
-  - Clears the current team session cookie.
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/admin/contest-state` | `GET` | Returns global status and timer info. |
+| `/api/admin/start-level` | `POST` | Starts a specific or next available level. |
+| `/api/admin/next-level` | `POST` | Advances the global contest to the next phase. |
+| `/api/admin/seed-levels` | `POST` | Bulk-uploads Level data (Overwrites existing). |
 
-- `GET /api/team/state`
-  - Returns the authenticated team state, timer snapshot, level status, and live score preview.
+#### 1. `GET /api/admin/contest-state`
+**Response:**
+```json
+{
+  "success": true,
+  "contestState": {
+    "status": "idle",
+    "totalLevels": 10,
+    "currentLevel": 1,
+    "levelStartedAt": "2026-04-03T10:00:00Z",
+    "levelEndsAt": "2026-04-03T10:15:00Z",
+    "maxPointsPerQuestion": 1000,
+    "gracePeriodSeconds": 30,
+    "durationSeconds": 900,
+    "decayPerSecond": 1,
+    "clue1UnlockSeconds": 300,
+    "clue1Penalty": 150,
+    "clue2UnlockSeconds": 600,
+    "clue2Penalty": 250
+  }
+}
+```
 
-- `GET /api/team/current-question`
-  - Returns the current level question, visible clues, and the computed contest state for the team.
+#### 2. `POST /api/admin/start-level`
+**Request Body:**
+```json
+{ "level": 1 } 
+```
+*(Optional: Omit `level` to start the next one)*
 
-- `POST /api/team/submit-answer`
-  - Validates the submitted answer and locks the score when the answer is correct.
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Level 1 started successfully.",
+  "contestState": { "status": "running", "currentLevel": 1, "levelEndsAt": "..." }
+}
+```
 
-- `GET /api/leaderboard`
-  - Returns a read-only leaderboard based only on locked scores, capped at the top 10 teams.
+#### 3. `POST /api/admin/next-level`
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Level 2 started successfully.",
+  "contestState": { "status": "running", "currentLevel": 2, "levelEndsAt": "..." }
+}
+```
 
-- `GET /api/admin/contest-state`
-  - Returns the global contest state.
+#### 4. `POST /api/admin/seed-levels`
+**Request Body:**
+```json
+{
+  "levels": [
+    {
+      "levelNumber": 1,
+      "question": "Reverse a linked list...",
+      "answer": "ans123",
+      "clue1": "Use three pointers...",
+      "clue2": "Second clue here...",
+      "maxPoints": 1000,
+      "gracePeriodSeconds": 30,
+      "durationSeconds": 900,
+      "decayPerSecond": 1,
+      "clue1UnlockSeconds": 300,
+      "clue1Penalty": 150,
+      "clue2UnlockSeconds": 600,
+      "clue2Penalty": 250
+    }
+  ]
+}
+```
 
-- `POST /api/admin/start-level`
-  - Starts a specific level, or the current level if none is provided.
+---
 
-- `POST /api/admin/next-level`
-  - Advances the contest to the next level and starts its timer immediately.
+### 👥 Team Routes
 
-## Data Models
+| Route | Method | Auth |
+|-------|--------|------|
+| `/api/team/signup` | `POST` | None |
+| `/api/team/login` | `POST` | None |
+| `/api/team/logout` | `POST` | Cookie |
+| `/api/team/state` | `GET` | Cookie |
+| `/api/team/current-question` | `GET` | Cookie |
+| `/api/team/submit-answer` | `POST` | Cookie |
 
-- `Team`: unique team name, normalized team name, password hash, members, total locked score, current level, per-level state, last login timestamps
-- `Level`: level number, question, answer, two clues, and per-level scoring/timer configuration
-- `ContestState`: singleton global contest status, active level, level timer, and default scoring configuration
-- `Submission`: one final locked result per team per level, either `solved` or `expired`, with the locked score snapshot, clue penalty snapshot, and response time
+#### 1. `POST /api/team/signup`
+**Request Body (Option A - Object List):**
+```json
+{
+  "teamName": "TeamAlpha",
+  "password": "securePass123",
+  "members": [
+    { "studentNumber": "2510001" },
+    { "studentNumber": "2510002" }
+  ]
+}
+```
+**Request Body (Option B - String List):**
+```json
+{
+  "teamName": "TeamAlpha",
+  "password": "securePass123",
+  "studentNumbers": ["2510001", "2510002"]
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "team": { "id": "...", "teamName": "TeamAlpha", "teamNumber": 12 }
+}
+```
+
+#### 2. `POST /api/team/login`
+**Request Body:**
+```json
+{ "teamName": "TeamAlpha", "password": "securePass123" }
+```
+**Response:**
+```json
+{
+  "success": true,
+  "team": { "id": "...", "teamName": "TeamAlpha", "teamNumber": 12 }
+}
+```
+
+#### 3. `POST /api/team/logout`
+**Response:**
+```json
+{ "success": true }
+```
+
+#### 4. `GET /api/team/state`
+**Response:**
+```json
+{
+  "success": true,
+  "state": {
+    "contestStatus": "running",
+    "currentLevel": 1,
+    "teamCurrentLevel": 1,
+    "levelState": { "status": "active", "clue1PenaltyApplied": false },
+    "totalLockedScore": 4500,
+    "timer": { "levelEndsAt": "...", "timeRemainingSeconds": 420 },
+    "scoring": { "liveScore": 850, "timeDecay": 50, "cluePenaltyTotal": 0 }
+  }
+}
+```
+
+#### 5. `GET /api/team/current-question`
+**Response:**
+```json
+{
+  "success": true,
+  "currentQuestion": {
+    "levelNumber": 1,
+    "question": "Reverse a linked list...",
+    "clue1": "Use three pointers...",
+    "clue2": null 
+  },
+  "state": { "contestStatus": "running", "scoring": { "liveScore": 850 } }
+}
+```
+
+#### 6. `POST /api/team/submit-answer`
+**Request Body:**
+```json
+{ "answer": "Paris" }
+```
+**Response (Correct):**
+```json
+{
+  "success": true,
+  "isCorrect": true,
+  "lockedScore": 850,
+  "state": { "nextLevel": 2, "totalLockedScore": 5350 }
+}
+```
+
+---
+
+### 🏆 Public Routes
+
+#### 1. `GET /api/leaderboard`
+**Query Params:** `?limit=5`
+**Response:**
+```json
+{
+  "success": true,
+  "leaderboard": [
+    { "rank": 1, "teamName": "TeamAlpha", "totalLockedScore": 5350, "currentLevel": 2 },
+    { "rank": 2, "teamName": "TeamBeta", "totalLockedScore": 4200, "currentLevel": 1 }
+  ]
+}
+```
+
+---
+
+## 🏗️ Data Models
+
+- **Team**: Stores members, locked scores, and progress state.
+- **Level**: Configuration for each challenge and its scoring metrics.
+- **ContestState**: Singleton managing the global "running" status and timers.
+- **Submission**: Audit log of every locked result (solved/expired).
+- **Registration (User)**: The "Day 1" database of authorized participants.
