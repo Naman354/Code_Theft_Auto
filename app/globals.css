@@ -1,26 +1,108 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #040507;
+  --foreground: #f5fff7;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: "Courier New", Courier, monospace;
+  --font-sans: var(--font-body), "Arial Narrow", "Arial", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(circle at top left, rgba(0, 255, 140, 0.14), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(0, 255, 255, 0.1), transparent 28%),
+    linear-gradient(180deg, #060708 0%, #020303 100%);
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display), Impact, sans-serif;
+  }
+
+  .font-body {
+    font-family: var(--font-body), "Arial Narrow", "Arial", sans-serif;
+  }
+
+  .font-accent {
+    font-family: var(--font-accent), "Trebuchet MS", sans-serif;
+  }
+}
+
+
+@font-face {
+  font-family: 'Chalet';
+  src: url('/assets/fonts/ChaletComprime CologneSixty.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Forresten';
+  src: url('/assets/fonts/Forresten.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Pricedown';
+  src: url('/assets/fonts/Pricedown Bl.otf') format('opentype');
+}
+.font-chalet {
+  font-family: 'Chalet', sans-serif;
+}
+
+.font-forresten {
+  font-family: 'Forresten', sans-serif;
+}
+
+.font-pricedown {
+  font-family: 'Pricedown', sans-serif;
+}
+
+::selection {
+  background: rgba(163, 255, 160, 0.35);
+  color: #fafffb;
+}
+
+.cyber-panel {
+  background: linear-gradient(180deg, rgba(10, 12, 13, 0.92), rgba(5, 6, 7, 0.92));
+  border: 1px solid rgba(163, 255, 160, 0.16);
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 140, 0.06),
+    0 0 40px rgba(0, 255, 140, 0.08);
+}
+
+.cyber-grid {
+  background-image:
+    linear-gradient(rgba(0, 255, 140, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 140, 0.07) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.cyber-scan::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+  animation: scan 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-20%);
+  }
+  100% {
+    transform: translateY(120%);
+  }
 }
