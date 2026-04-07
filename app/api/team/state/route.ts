@@ -20,6 +20,13 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
+      team: {
+        id: team._id,
+        teamName: team.teamName,
+        members: team.members,
+        totalLockedScore: team.totalLockedScore,
+        currentLevel: team.currentLevel,
+      },
       state: buildCurrentQuestionState({
         contestState,
         team,

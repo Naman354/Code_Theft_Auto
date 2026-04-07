@@ -1,24 +1,27 @@
 import { NextResponse } from "next/server";
+import { getArenaSessionFromRequest } from "@/lib/arena-session";
+import { isAdminTeam } from "@/lib/admin-access";
+import { getAdminSessionFromRequest, hasValidAdminSecret } from "@/lib/admin-session";
 
-function getAdminApiSecret() {
-  const adminApiSecret = process.env.ADMIN_API_SECRET;
-
-  if (!adminApiSecret) {
-    throw new Error("ADMIN_API_SECRET is not set in environment variables.");
-  }
-
-  return adminApiSecret;
-}
-
-export function ensureAdminAccess(request: Request) {
+export async function ensureAdminAccess(request: Request) {
   const providedSecret = request.headers.get("x-admin-secret")?.trim();
 
-  if (!providedSecret) {
+  if (hasValidAdminSecret(providedSecret)) {
+    return null;
+  }
+
+  if (getAdminSessionFromRequest(request)) {
+    return null;
+  }
+
+  const session = getArenaSessionFromRequest(request);
+  if (!session) {
     return NextResponse.json({ error: "Missing admin credentials." }, { status: 401 });
   }
 
-  if (providedSecret !== getAdminApiSecret()) {
-    return NextResponse.json({ error: "Invalid admin credentials." }, { status: 403 });
+  const adminAllowed = await isAdminTeam(session.teamId);
+  if (!adminAllowed) {
+    return NextResponse.json({ error: "Admin privileges required." }, { status: 403 });
   }
 
   return null;

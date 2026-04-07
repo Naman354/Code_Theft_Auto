@@ -5,7 +5,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 
 export async function GET(request: Request) {
   try {
-    const authError = ensureAdminAccess(request);
+    const authError = await ensureAdminAccess(request);
 
     if (authError) {
       return authError;

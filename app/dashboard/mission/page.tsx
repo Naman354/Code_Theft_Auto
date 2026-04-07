@@ -3,8 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ARENA_LEVELS, type ArenaLevelView } from "@/lib/arena-data";
-import { fetchArenaLevels, getArenaToken, submitArenaAnswer } from "@/services/arena-api";
+import { ARENA_LEVELS, formatArenaTime, type ArenaLevelView } from "@/lib/arena-data";
+import {
+  fetchCurrentQuestion,
+  fetchArenaLevels,
+  fetchArenaTeamState,
+  getArenaTeamMembers,
+  getArenaToken,
+  submitArenaAnswer,
+} from "@/services/arena-api";
 
 function getFallbackLevels(): ArenaLevelView[] {
   return ARENA_LEVELS.map((level, index) => ({
@@ -70,7 +77,10 @@ function DecorativeButton({
 }
 
 export default function MissionPage() {
+  type CurrentQuestionPayload = Awaited<ReturnType<typeof fetchCurrentQuestion>>;
+
   const [teamName, setTeamName] = useState("VANSHIKA");
+  const [teamMembers, setTeamMembers] = useState<Array<{ name: string; studentNumber: string }>>([]);
   const [score, setScore] = useState(0);
   const [levels, setLevels] = useState<ArenaLevelView[]>(getFallbackLevels());
   const [selectedLevelNumber, setSelectedLevelNumber] = useState(1);
@@ -79,14 +89,17 @@ export default function MissionPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [clueTwoUnlocked, setClueTwoUnlocked] = useState(false);
+  const [currentQuestionPayload, setCurrentQuestionPayload] = useState<CurrentQuestionPayload | null>(null);
 
   const selectedLevel = useMemo(
     () => levels.find((level) => level.levelNumber === selectedLevelNumber) ?? levels[0],
     [levels, selectedLevelNumber],
   );
 
-  const timer = selectedLevel.timeRemaining ?? selectedLevel.duration;
+  const isSelectedLevelLive = currentQuestionPayload?.currentQuestion?.levelNumber === selectedLevel.levelNumber;
+  const timer = isSelectedLevelLive
+    ? formatArenaTime(currentQuestionPayload.state.timer.timeRemainingSeconds)
+    : selectedLevel.timeRemaining ?? selectedLevel.duration;
   const wantedLevel = Math.max(1, Math.min(5, selectedLevel.levelNumber));
 
   useEffect(() => {
@@ -95,12 +108,20 @@ export default function MissionPage() {
     if (storedName) {
       setTeamName(storedName);
     }
+    const storedMembers = getArenaTeamMembers();
+    if (storedMembers.length) {
+      setTeamMembers(storedMembers);
+    }
 
     let cancelled = false;
 
-    async function loadLevels() {
+    async function loadArenaState() {
       try {
-        const payload = await fetchArenaLevels(token);
+        const [payload, teamPayload, questionPayload] = await Promise.all([
+          fetchArenaLevels(token),
+          fetchArenaTeamState(token),
+          fetchCurrentQuestion(token),
+        ]);
         if (cancelled) {
           return;
         }
@@ -122,6 +143,17 @@ export default function MissionPage() {
         if (typeof contestState?.totalLockedScore === "number") {
           setScore(contestState.totalLockedScore);
         }
+
+        if (teamPayload?.team) {
+          setTeamName(teamPayload.team.teamName);
+          setTeamMembers(teamPayload.team.members ?? []);
+          window.localStorage.setItem("code-theft-arena-name", teamPayload.team.teamName);
+        }
+
+        setCurrentQuestionPayload(questionPayload);
+        if (typeof questionPayload.state.totalLockedScore === "number") {
+          setScore(questionPayload.state.totalLockedScore);
+        }
       } catch (loadError) {
         if (cancelled) {
           return;
@@ -140,10 +172,14 @@ export default function MissionPage() {
       }
     }
 
-    void loadLevels();
+    void loadArenaState();
+    const intervalId = window.setInterval(() => {
+      void loadArenaState();
+    }, 5000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -166,12 +202,16 @@ export default function MissionPage() {
       if ((payload as { isCorrect?: boolean }).isCorrect) {
         setMessage((payload as { message?: string }).message ?? "Access granted.");
         setAnswer("");
-        const refreshed = await fetchArenaLevels(getArenaToken());
-        const refreshedLevels = (refreshed as { levels?: ArenaLevelView[] }).levels;
+        const [refreshedLevelsPayload, refreshedQuestionPayload] = await Promise.all([
+          fetchArenaLevels(getArenaToken()),
+          fetchCurrentQuestion(getArenaToken()),
+        ]);
+        const refreshedLevels = (refreshedLevelsPayload as { levels?: ArenaLevelView[] }).levels;
         if (refreshedLevels?.length) {
           setLevels(refreshedLevels);
-          setScore((refreshed as { contestState?: { totalLockedScore?: number } }).contestState?.totalLockedScore ?? score);
         }
+        setCurrentQuestionPayload(refreshedQuestionPayload);
+        setScore(refreshedQuestionPayload.state.totalLockedScore ?? score);
       } else {
         setMessage((payload as { message?: string }).message ?? "Incorrect answer.");
       }
@@ -181,12 +221,28 @@ export default function MissionPage() {
       setSubmitting(false);
     }
   }
-
-  const rosterRows = Array.from({ length: 4 }, (_, index) => ({
-    id: `${teamName.toUpperCase()}-${index + 1}`,
-    name: teamName,
-    studentId: "2500823",
-  }));
+  const rosterRows = teamMembers.length
+    ? teamMembers.map((member, index) => ({
+        id: `${member.studentNumber}-${index}`,
+        name: member.name,
+        studentId: member.studentNumber,
+      }))
+    : [
+        {
+          id: `${teamName.toUpperCase()}-fallback`,
+          name: teamName,
+          studentId: "N/A",
+        },
+      ];
+  const activeQuestion = currentQuestionPayload?.currentQuestion;
+  const clueOne = isSelectedLevelLive ? activeQuestion?.clue1 : null;
+  const clueTwo = isSelectedLevelLive ? activeQuestion?.clue2 : null;
+  const selectedQuestionBody =
+    isSelectedLevelLive && activeQuestion?.question ? activeQuestion.question : selectedLevel.description;
+  const selectedObjective =
+    isSelectedLevelLive
+      ? `Live score: ${currentQuestionPayload?.state.scoring.liveScore ?? 0}`
+      : selectedLevel.objective;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
@@ -263,7 +319,7 @@ export default function MissionPage() {
                 </div>
 
                 <div className="space-y-3 px-3">
-                  {rosterRows.map((row, index) => (
+                  {rosterRows.map((row) => (
                     <div
                       key={row.id}
                       className="flex items-stretch bg-[#242424] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
@@ -386,11 +442,11 @@ export default function MissionPage() {
                     Question-1
                   </div>
                   <div className="mt-4 max-w-3xl font-chalet text-[0.92rem] uppercase leading-8 tracking-[0.24em] text-zinc-200/90 sm:text-[1rem]">
-                    {selectedLevel.description}
+                    {selectedQuestionBody}
                   </div>
 
                   <div className="mt-auto max-w-3xl font-chalet text-[0.8rem] uppercase tracking-[0.3em] text-zinc-400">
-                    Objective: {selectedLevel.objective}
+                    Objective: {selectedObjective}
                   </div>
                 </div>
 
@@ -403,7 +459,7 @@ export default function MissionPage() {
                     className="h-auto w-[180px] object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)]"
                   />
                   <p className="mt-2 max-w-[180px] text-right font-chalet text-[0.58rem] uppercase leading-5 tracking-[0.35em] text-zinc-400">
-                    "Start simple. Focus, and you will get the hang of it"
+                    &quot;Start simple. Focus, and you will get the hang of it&quot;
                   </p>
                 </div>
               </section>
@@ -430,23 +486,29 @@ export default function MissionPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="border-l-4 border-white/90 pl-3">
                         <div className="font-pricedown text-[1.85rem] uppercase leading-none tracking-[0.08em] text-cyan-400">
-                          Clue :- 1
+                          Live Intel
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setClueTwoUnlocked(true)}
-                        className="rounded-[0.45rem] border border-cyan-400 bg-cyan-400/5 px-4 py-1.5 font-chalet text-[0.82rem] uppercase tracking-[0.18em] text-cyan-300 transition hover:bg-cyan-400/10"
-                      >
-                        Unlock Clue 2
-                      </button>
                     </div>
 
                     <div className="min-h-[170px] max-w-2xl font-chalet text-[0.9rem] uppercase leading-8 tracking-[0.24em] text-zinc-200">
-                      {selectedLevel.reward}
-                      <div className="mt-3 text-[0.72rem] tracking-[0.28em] text-zinc-500">
-                        {clueTwoUnlocked ? `Clue 2 unlocked: ${selectedLevel.demoAnswer}` : "Clue 2 is still sealed."}
+                      {isSelectedLevelLive ? (
+                        <>
+                          <div>{clueOne ?? "Clue 1 is still locked. It will appear when the admin timer reaches the first unlock window."}</div>
+                          <div className="mt-4 border-t border-white/10 pt-4">
+                            {clueTwo ?? "Clue 2 is still locked. It unlocks later in the same timer cycle."}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div>Hints are only streamed for the current live level.</div>
+                          <div className="mt-4 border-t border-white/10 pt-4 text-[0.72rem] tracking-[0.28em] text-zinc-500">
+                            Select the active level to view admin-controlled clue releases.
+                          </div>
+                        </>
+                      )}
+                      <div className="mt-4 text-[0.72rem] tracking-[0.28em] text-zinc-500">
+                        Penalties: {currentQuestionPayload?.state.scoring.clue1Penalty ?? "-"} / {currentQuestionPayload?.state.scoring.clue2Penalty ?? "-"}
                       </div>
                     </div>
                   </div>

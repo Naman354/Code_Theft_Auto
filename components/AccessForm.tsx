@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 type AccessFormProps = {
-  onSubmit: (username: string, accessCode: string) => Promise<void>;
+  onSubmit: (primaryValue: string, secondaryValue: string) => Promise<void>;
   loading?: boolean;
   error?: string | null;
   eyebrow?: string;
@@ -29,15 +29,15 @@ export function AccessForm({
   primaryPlaceholder = "operator_07",
   secondaryPlaceholder = "********",
 }: AccessFormProps) {
-  const [username, setUsername] = useState("");
-  const [accessCode, setAccessCode] = useState("");
+  const [primaryValue, setPrimaryValue] = useState("");
+  const [secondaryValue, setSecondaryValue] = useState("");
 
   return (
     <form
       className="rounded-[2rem] border border-lime-400/20 bg-black/70 p-6 shadow-[0_0_40px_rgba(0,255,140,0.14)] backdrop-blur-xl sm:p-8"
       onSubmit={async (event) => {
         event.preventDefault();
-        await onSubmit(username, accessCode);
+        await onSubmit(primaryValue, secondaryValue);
       }}
     >
       <div className="space-y-2 text-center">
@@ -55,8 +55,8 @@ export function AccessForm({
         <label className="grid gap-2">
           <span className="text-xs uppercase tracking-[0.35em] text-zinc-400">{primaryLabel}</span>
           <input
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            value={primaryValue}
+            onChange={(event) => setPrimaryValue(event.target.value)}
             className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20"
             placeholder={primaryPlaceholder}
             autoComplete="username"
@@ -65,8 +65,8 @@ export function AccessForm({
         <label className="grid gap-2">
           <span className="text-xs uppercase tracking-[0.35em] text-zinc-400">{secondaryLabel}</span>
           <input
-            value={accessCode}
-            onChange={(event) => setAccessCode(event.target.value)}
+            value={secondaryValue}
+            onChange={(event) => setSecondaryValue(event.target.value)}
             type="password"
             className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20"
             placeholder={secondaryPlaceholder}

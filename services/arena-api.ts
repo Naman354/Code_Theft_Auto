@@ -1,14 +1,19 @@
 import type { ArenaLeaderboardEntry, ArenaLevelView } from "@/lib/arena-data";
 
 const ARENA_STORAGE_KEY = "code-theft-arena-token";
+const ADMIN_SECRET_STORAGE_KEY = "code-theft-admin-secret";
+const TEAM_NAME_STORAGE_KEY = "code-theft-arena-name";
+const TEAM_MEMBERS_STORAGE_KEY = "code-theft-arena-members";
+
+type TeamMember = { name: string; studentNumber: string };
 
 type LoginResponse = {
   success: true;
-  token: string;
+  token?: string;
   team: {
     id: string;
     teamName: string;
-    members: Array<{ name: string; studentNumber: string }>;
+    members: TeamMember[];
     totalLockedScore: number;
     currentLevel: number;
   };
@@ -35,6 +40,129 @@ type LeaderboardResponse = {
   leaderboard: ArenaLeaderboardEntry[];
 };
 
+type TeamAuthResponse = {
+  success: true;
+  team: {
+    id: string;
+    teamName: string;
+    members: TeamMember[];
+    totalLockedScore: number;
+    currentLevel: number;
+  };
+};
+
+export type AdminContestState = {
+  status: "not_started" | "running" | "paused" | "completed";
+  totalLevels: number;
+  currentLevel: number;
+  levelStartedAt: string | null;
+  levelEndsAt: string | null;
+  maxPointsPerQuestion: number;
+  gracePeriodSeconds: number;
+  durationSeconds: number;
+  decayPerSecond: number;
+  clue1UnlockSeconds: number;
+  clue1Penalty: number;
+  clue2UnlockSeconds: number;
+  clue2Penalty: number;
+};
+
+type ContestStateResponse = {
+  success: true;
+  contestState: AdminContestState;
+};
+
+type AdminActionResponse = {
+  success: true;
+  message: string;
+  contestState?: Partial<AdminContestState>;
+};
+
+type AdminTeamsResponse = {
+  success: true;
+  totalTeams: number;
+  teams: Array<{
+    id: string;
+    teamName: string;
+    currentLevel: number;
+    score: number;
+    penalties: number;
+    lastSubmissionAt: string | null;
+  }>;
+};
+
+type TeamStateResponse = {
+  success: true;
+  team: {
+    id: string;
+    teamName: string;
+    members: TeamMember[];
+    totalLockedScore: number;
+    currentLevel: number;
+  };
+  state: Record<string, unknown>;
+};
+
+type AdminSessionResponse = {
+  success: true;
+};
+
+type RegisteredTeamNamesResponse = {
+  success: true;
+  totalTeams: number;
+  teams: Array<{
+    id: string;
+    teamName: string;
+    memberCount: number;
+  }>;
+};
+
+type CurrentQuestionResponse = {
+  success: true;
+  currentQuestion: {
+    levelNumber: number;
+    question: string;
+    clue1: string | null;
+    clue2: string | null;
+  } | null;
+  state: {
+    contestStatus: "not_started" | "running" | "paused" | "completed";
+    currentLevel: number;
+    teamCurrentLevel: number;
+    totalLockedScore: number;
+    timer: {
+      levelStartedAt: string | null;
+      levelEndsAt: string | null;
+      elapsedSeconds: number;
+      timeRemainingSeconds: number;
+      durationSeconds: number;
+    };
+    scoring: {
+      maxPointsPerQuestion: number;
+      gracePeriodSeconds: number;
+      decayPerSecond: number;
+      clue1UnlockSeconds: number;
+      clue1Penalty: number;
+      clue2UnlockSeconds: number;
+      clue2Penalty: number;
+      timeDecay: number;
+      cluePenaltyTotal: number;
+      liveScore: number;
+    };
+    levelState: {
+      levelNumber: number;
+      status: "not_started" | "active" | "solved" | "expired";
+      lockedScore: number;
+      clue1PenaltyApplied: boolean;
+      clue1PenaltyAppliedAt: string | null;
+      clue2PenaltyApplied: boolean;
+      clue2PenaltyAppliedAt: string | null;
+      solvedAt?: string | null;
+      expiredAt?: string | null;
+    };
+  };
+};
+
 export function getArenaToken() {
   if (typeof window === "undefined") {
     return null;
@@ -51,6 +179,84 @@ export function clearArenaToken() {
   window.localStorage.removeItem(ARENA_STORAGE_KEY);
 }
 
+export function setArenaTeamSnapshot(input: { teamName: string; members: TeamMember[] }) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(TEAM_NAME_STORAGE_KEY, input.teamName);
+  window.localStorage.setItem(TEAM_MEMBERS_STORAGE_KEY, JSON.stringify(input.members));
+}
+
+export function getArenaTeamMembers() {
+  if (typeof window === "undefined") {
+    return [] as TeamMember[];
+  }
+
+  const raw = window.localStorage.getItem(TEAM_MEMBERS_STORAGE_KEY);
+
+  if (!raw) {
+    return [] as TeamMember[];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as TeamMember[];
+    return Array.isArray(parsed) ? parsed : ([] as TeamMember[]);
+  } catch {
+    return [] as TeamMember[];
+  }
+}
+
+export function getStoredAdminSecret() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem(ADMIN_SECRET_STORAGE_KEY);
+}
+
+export function setAdminSecret(secret: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(ADMIN_SECRET_STORAGE_KEY, secret);
+}
+
+export function clearAdminSecret() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(ADMIN_SECRET_STORAGE_KEY);
+}
+
+export async function loginAdmin(secret: string) {
+  const response = await fetch("/api/admin/session", {
+    method: "POST",
+    headers: new Headers({
+      "Content-Type": "application/json",
+      "x-admin-secret": secret,
+    }),
+    credentials: "include",
+    body: JSON.stringify({ secret }),
+  });
+
+  const payload = await parseJsonResponse<AdminSessionResponse>(response);
+  setAdminSecret(secret);
+  return payload;
+}
+
+export async function logoutAdmin() {
+  const response = await fetch("/api/admin/session", {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  clearAdminSecret();
+  return parseJsonResponse<AdminSessionResponse>(response);
+}
+
 function getArenaHeaders(token?: string | null) {
   const headers = new Headers({
     "Content-Type": "application/json",
@@ -60,6 +266,17 @@ function getArenaHeaders(token?: string | null) {
 
   if (storedToken) {
     headers.set("Authorization", `Bearer ${storedToken}`);
+  }
+
+  return headers;
+}
+
+function getAdminHeaders(token?: string | null) {
+  const headers = getArenaHeaders(token);
+  const adminSecret = getStoredAdminSecret();
+
+  if (adminSecret) {
+    headers.set("x-admin-secret", adminSecret);
   }
 
   return headers;
@@ -78,14 +295,14 @@ async function parseJsonResponse<T>(response: Response) {
   return payload as T;
 }
 
-export async function loginArena(username: string, accessCode: string) {
-  const response = await fetch("/api/auth/login", {
+export async function loginArena(teamName: string, password: string) {
+  const response = await fetch("/api/team/login", {
     method: "POST",
     headers: getArenaHeaders(),
     credentials: "include",
     body: JSON.stringify({
-      username,
-      accessCode,
+      teamName,
+      password,
     }),
   });
 
@@ -95,7 +312,68 @@ export async function loginArena(username: string, accessCode: string) {
     setArenaToken(payload.token);
   }
 
+  if (payload?.team) {
+    setArenaTeamSnapshot({
+      teamName: payload.team.teamName,
+      members: payload.team.members ?? [],
+    });
+  }
+
   return payload;
+}
+
+export async function signupArenaTeam(input: {
+  teamName: string;
+  password: string;
+  studentNumbers: string[];
+}) {
+  const response = await fetch("/api/team/signup", {
+    method: "POST",
+    headers: getArenaHeaders(),
+    credentials: "include",
+    body: JSON.stringify({
+      teamName: input.teamName,
+      password: input.password,
+      studentNumbers: input.studentNumbers,
+    }),
+  });
+
+  const payload = await parseJsonResponse<TeamAuthResponse>(response);
+
+  if (payload?.team) {
+    setArenaTeamSnapshot({
+      teamName: payload.team.teamName,
+      members: payload.team.members ?? [],
+    });
+  }
+
+  return payload;
+}
+
+export async function logoutArenaTeam() {
+  const response = await fetch("/api/team/logout", {
+    method: "POST",
+    headers: getArenaHeaders(),
+    credentials: "include",
+  });
+
+  clearArenaToken();
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(TEAM_NAME_STORAGE_KEY);
+    window.localStorage.removeItem(TEAM_MEMBERS_STORAGE_KEY);
+  }
+  return parseJsonResponse<{ success: true }>(response);
+}
+
+export async function fetchArenaTeamState(token?: string | null) {
+  const response = await fetch("/api/team/state", {
+    method: "GET",
+    headers: getArenaHeaders(token),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseJsonResponse<TeamStateResponse>(response);
 }
 
 export async function fetchArenaLevels(token?: string | null) {
@@ -135,4 +413,86 @@ export async function fetchArenaLeaderboard() {
   });
 
   return parseJsonResponse<LeaderboardResponse>(response);
+}
+
+export async function fetchRegisteredTeamNames() {
+  const response = await fetch("/api/team/names", {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseJsonResponse<RegisteredTeamNamesResponse>(response);
+}
+
+export async function fetchCurrentQuestion(token?: string | null) {
+  const response = await fetch("/api/team/current-question", {
+    method: "GET",
+    headers: getArenaHeaders(token),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseJsonResponse<CurrentQuestionResponse>(response);
+}
+
+export async function fetchContestState(token?: string | null) {
+  const response = await fetch("/api/admin/contest-state", {
+    method: "GET",
+    headers: getAdminHeaders(token),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseJsonResponse<ContestStateResponse>(response);
+}
+
+export async function startLevel(input?: { level?: number; token?: string | null }) {
+  const response = await fetch("/api/admin/start-level", {
+    method: "POST",
+    headers: getAdminHeaders(input?.token),
+    credentials: "include",
+    body: JSON.stringify({
+      level: input?.level,
+    }),
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
+}
+
+export async function nextLevel(token?: string | null) {
+  const response = await fetch("/api/admin/next-level", {
+    method: "POST",
+    headers: getAdminHeaders(token),
+    credentials: "include",
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
+}
+
+export async function seedLevels(input?: {
+  levels?: Array<Record<string, unknown>>;
+  token?: string | null;
+}) {
+  const response = await fetch("/api/admin/seed-levels", {
+    method: "POST",
+    headers: getAdminHeaders(input?.token),
+    credentials: "include",
+    body: JSON.stringify({
+      levels: input?.levels,
+    }),
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
+}
+
+export async function fetchTeams(token?: string | null) {
+  const response = await fetch("/api/admin/teams", {
+    method: "GET",
+    headers: getAdminHeaders(token),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return parseJsonResponse<AdminTeamsResponse>(response);
 }

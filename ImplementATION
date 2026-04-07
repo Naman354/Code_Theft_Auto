@@ -1,0 +1,97 @@
+# Code Theft Auto - Project Analysis Report
+
+## 1. PROJECT OVERVIEW
+**Purpose:** "Code Theft Auto Arena" is a cyberpunk-themed, competitive, time-sensitive gaming portal where student teams solve challenges (levels) to gain points. Teams can be penalized for unlocking clues or taking too long.
+**Tech Stack:**
+- **Framework:** Next.js 16.2 (App Router)
+- **Frontend library:** React 19
+- **Styling:** Tailwind CSS V4
+- **Backend/Database:** MongoDB with Mongoose (`^9.3`)
+- **API:** Next.js Route Handlers (Serverless API)
+
+## 2. BACKEND ANALYSIS
+The backend architecture is fairly mature and robust, handling complex game states and point decay mechanisms.
+
+**Implemented Routes (by Module):**
+- **Auth:** `/api/auth/login`, `/api/team/login`, `/api/team/signup`, `/api/team/logout`
+- **Gameplay (User):** `/api/team/current-question`, `/api/team/state`, `/api/team/submit-answer`
+- **Levels & Leaderboard (Read):** `/api/levels`, `/api/leaderboard`
+- **Admin:** `/api/admin/contest-state`, `/api/admin/next-level`, `/api/admin/seed-levels`, `/api/admin/start-level`
+
+**Database Schema:**
+- **User/Registration:** Name, Email, StudentNumber, TeamId, isAdmin.
+- **Team:** Tracks team members, passwords, total points, current level, and individual *level states* (including penalties).
+- **Level:** Defines question, clues, max points, duration, decay parameters, and clue penalties.
+- **Submission:** Logs team submissions, correctness, response times, and final locked scores.
+- **ContestState:** Singleton configuration holding global timers and default settings.
+
+**Incomplete/Missing Features:**
+- Strong role-based access control (RBAC) middleware for the `/admin/*` routes.
+- Robust rate-limiting logic on the `submit-answer` route to prevent brute forcing.
+
+## 3. FRONTEND ANALYSIS
+The UI has a distinct cyberpunk/hacker aesthetic.
+
+**Existing Pages & Purpose:**
+- [/page.tsx](file:///c:/Users/Navjeet%20Sinha/OneDrive/Desktop/Code_Theft_Auto/app/page.tsx): Landing Page. Handles access via "Student ID" and "Team Name".
+- [/dashboard/page.tsx](file:///c:/Users/Navjeet%20Sinha/OneDrive/Desktop/Code_Theft_Auto/app/dashboard/page.tsx): User Dashboard. Displays the current active level ("Wanted Level"), timer, and "Mission Blueprint".
+- [/dashboard/mission/page.tsx](file:///c:/Users/Navjeet%20Sinha/OneDrive/Desktop/Code_Theft_Auto/app/dashboard/mission/page.tsx): Gameplay Arena. Displays the current question, allows answers, and handles unlocking Clue 1/2.
+- [/score/page.tsx](file:///c:/Users/Navjeet%20Sinha/OneDrive/Desktop/Code_Theft_Auto/app/score/page.tsx): Global Scoreboard / Leaderboard.
+
+**Missing Pages:**
+- **Admin Panel UI:** There are **NO** frontend pages for administrators. The admin API exists, but the UI to trigger them is completely missing.
+
+## 4. INTEGRATION STATUS
+**User Side (100% Integrated):**
+- The frontend uses a dedicated [services/arena-api.ts](file:///c:/Users/Navjeet%20Sinha/OneDrive/Desktop/Code_Theft_Auto/services/arena-api.ts) to seamlessly communicate with the backend (`loginArena`, `fetchArenaLevels`, `submitArenaAnswer`, `fetchArenaLeaderboard`).
+- Data matches well, UI gracefully handles loading, error states, and locked/active UI states based on backend payloads.
+
+**Admin Side (0% Integrated):**
+- The admin endpoints (like starting a level, modifying contest state) are completely decoupled as there is no Admin UI to drive them.
+
+## 5. ADMIN PANEL & USER PANEL
+**a) User Panel** (Mostly Complete):
+- [x] Login & Auth
+- [x] View current active/locked levels
+- [x] View mission objective, timer, and clue unlocking
+- [x] Submit answers & view feedback
+- [x] Global Leaderboard
+
+**b) Admin Panel** (Critically Missing UI):
+- [ ] UI to manually override/start/pause the Contest State.
+- [ ] UI to progress teams to the next level.
+- [ ] Dashboard to monitor all teams and live submissions.
+- [ ] UI to seed new levels or reset databases.
+
+## 6. PROJECT COMPLETION GAP ANALYSIS
+- **Overall Completion:** ~65%
+- **Backend:** 85% Complete (Core game loops are functional, needs minor security polish).
+- **Frontend (User):** 90% Complete (Very polished, some minor edge-case handling needed).
+- **Frontend (Admin):** 0% Complete. 
+
+**Critical Blockers:**
+The platform cannot be managed by organizers without manually hitting the `/api/admin/*` endpoints via Postman/Curl. Building the Admin Interface is the #1 blocker.
+
+## 7. STEP-BY-STEP COMPLETION PLAN
+**Phase 1: Admin Panel UI Development (High Priority)**
+1. **Routing:** Create `/app/admin/layout.tsx` and nested pages (Dashboard, Teams, Contest Controls).
+2. **Contest Controls UI:** A page to hit `/api/admin/start-level` and `/api/admin/next-level`, along with viewing the global [ContestState](file:///c:/Users/Navjeet%20Sinha/OneDrive/Desktop/Code_Theft_Auto/models/ContestState.ts#31-32).
+3. **Team Monitoring:** A page calling a (new) API to list all teams and their progress.
+4. **Auth Guards:** Implement middleware or layout checks to ensure only users with `isAdmin: true` can access the `/admin` routes.
+
+**Phase 2: Security & Backend Polish**
+1. Audit backend API logs for brute-force vulnerabilities on the `/submit-answer` endpoint.
+2. Ensure `/api/admin/*` endpoints explicitly verify an `Admin` session, not just a standard team session.
+
+**Phase 3: Testing & Edge Cases**
+1. Test decay logic: Verify point penalties are correctly applied when the timer drops or clues are opened.
+2. Test concurrency: Ensure two simultaneous submissions from the same team don't cause duplicate point allocations.
+
+## 8. BEST PRACTICES & IMPROVEMENTS
+- **Security:** Move sensitive config (like JWT secrets) to `.env.local` if not already done. Add CSRF protection or strict origin checks.
+- **UX:** Add visual success/failure micro-animations during answer submission on `/dashboard/mission`.
+- **Database:** Ensure Mongoose indexes (like `submissionSchema.index({ teamId: 1, levelNumber: 1 })`) are built in the production DB.
+
+## 9. TESTING & DEPLOYMENT
+- **Missing Tests:** The project lacks a `__tests__` directory or obvious Playwright/Cypress end-to-end tests. Core logic in [/lib/contest-gameplay.ts](file:///c:/Users/Navjeet%20Sinha/OneDrive/Desktop/Code_Theft_Auto/lib/contest-gameplay.ts) **must** be unit tested.
+- **Deployment:** The app is Next.js; Vercel is the natural host. Ensure MongoDB URI is strictly whitelisted for the Vercel production IP range. Add `npm run build` checks before merging PRs.

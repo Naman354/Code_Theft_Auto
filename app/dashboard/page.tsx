@@ -2,9 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ARENA_LEVELS, type ArenaLevelView } from "@/lib/arena-data";
-import { fetchArenaLevels, getArenaToken } from "@/services/arena-api";
+import {
+  fetchArenaLevels,
+  fetchArenaTeamState,
+  getArenaTeamMembers,
+  getArenaToken,
+  logoutArenaTeam,
+} from "@/services/arena-api";
 
 function getFallbackLevels(): ArenaLevelView[] {
   return ARENA_LEVELS.map((level, index) => ({
@@ -27,7 +34,9 @@ function getLevelStatusLabel(status: ArenaLevelView["status"]) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [teamName, setTeamName] = useState("SYSTEM OPERATOR");
+  const [teamMembers, setTeamMembers] = useState<Array<{ name: string; studentNumber: string }>>([]);
   const [levels, setLevels] = useState<ArenaLevelView[]>(getFallbackLevels());
   const [timer, setTimer] = useState("15:00");
   const [loading, setLoading] = useState(true);
@@ -47,12 +56,17 @@ export default function DashboardPage() {
     if (storedName) {
       setTeamName(storedName);
     }
+    const storedMembers = getArenaTeamMembers();
+    if (storedMembers.length) {
+      setTeamMembers(storedMembers);
+    }
 
     let cancelled = false;
 
     async function loadArenaSnapshot() {
       try {
-        const payload = await fetchArenaLevels(getArenaToken());
+        const token = getArenaToken();
+        const [payload, teamPayload] = await Promise.all([fetchArenaLevels(token), fetchArenaTeamState(token)]);
         if (cancelled) {
           return;
         }
@@ -66,6 +80,12 @@ export default function DashboardPage() {
           const fallbackLevels = getFallbackLevels();
           setLevels(fallbackLevels);
           setTimer(fallbackLevels[0].duration);
+        }
+
+        if (teamPayload?.team) {
+          setTeamName(teamPayload.team.teamName);
+          setTeamMembers(teamPayload.team.members ?? []);
+          window.localStorage.setItem("code-theft-arena-name", teamPayload.team.teamName);
         }
       } catch (loadError) {
         if (cancelled) {
@@ -94,6 +114,17 @@ export default function DashboardPage() {
     };
   }, []);
 
+  async function handleLogout() {
+    try {
+      await logoutArenaTeam();
+    } catch {
+      // Ignore logout failures and return the user to entry page.
+    } finally {
+      window.localStorage.removeItem("code-theft-arena-name");
+      router.push("/");
+    }
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
       <div className="absolute inset-0">
@@ -119,9 +150,18 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-[1.6rem] border-4 border-cyan-400 bg-black px-4 py-2 text-right shadow-[0_0_24px_rgba(34,211,238,0.15)] sm:px-5 sm:py-3">
-            <div className="font-pricedown text-[2.7rem] leading-none tracking-[0.08em] text-white sm:text-[4rem]">
-              {timer}
+          <div className="flex flex-col items-end gap-3">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full border border-rose-400/50 bg-rose-500/10 px-4 py-2 text-[10px] uppercase tracking-[0.28em] text-rose-100 transition-all duration-300 hover:bg-rose-500/20"
+            >
+              Logout
+            </button>
+            <div className="rounded-[1.6rem] border-4 border-cyan-400 bg-black px-4 py-2 text-right shadow-[0_0_24px_rgba(34,211,238,0.15)] sm:px-5 sm:py-3">
+              <div className="font-pricedown text-[2.7rem] leading-none tracking-[0.08em] text-white sm:text-[4rem]">
+                {timer}
+              </div>
             </div>
           </div>
         </header>
@@ -142,9 +182,11 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-3 px-3">
-                {Array.from({ length: 4 }, (_, index) => (
+                {(teamMembers.length
+                  ? teamMembers
+                  : [{ name: teamName, studentNumber: "N/A" }]).map((member, index) => (
                   <div
-                    key={`${teamName}-${index}`}
+                    key={`${member.studentNumber}-${index}`}
                     className="flex items-stretch overflow-hidden bg-[#242424] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
                   >
                     <div className="flex w-full items-center gap-2 border-l-2 border-red-500 px-2 py-2">
@@ -153,14 +195,14 @@ export default function DashboardPage() {
                           <path d="M12 12.2a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2.3c-4.2 0-8 2.4-8 5.6V22h16v-1.9c0-3.2-3.8-5.6-8-5.6Z" />
                         </svg>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-chalet text-[0.88rem] uppercase tracking-[0.2em] text-zinc-100">
-                          {teamName}
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-chalet text-[0.88rem] uppercase tracking-[0.2em] text-zinc-100">
+                          {member.name}
+                          </div>
+                          <div className="font-chalet text-[0.72rem] uppercase tracking-[0.28em] text-zinc-400">
+                          {member.studentNumber}
+                          </div>
                         </div>
-                        <div className="font-chalet text-[0.72rem] uppercase tracking-[0.28em] text-zinc-400">
-                          2500823
-                        </div>
-                      </div>
                       <div className="bg-emerald-950 px-3 py-1 text-[0.62rem] uppercase tracking-[0.22em] text-emerald-400">
                         Connected
                       </div>

@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { AccessForm } from "@/components/AccessForm";
-import { loginArena } from "@/services/arena-api";
+import { fetchRegisteredTeamNames, loginAdmin, loginArena, signupArenaTeam } from "@/services/arena-api";
 import character5  from "@/public/assets/images/character5.png";
 const navItems = [
   { label: "Mission", href: "#mission" },
@@ -15,19 +15,131 @@ const navItems = [
 
 export default function Home() {
   const router = useRouter();
+  const [authMode, setAuthMode] = useState<"login" | "register" | "admin">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [registerTeamName, setRegisterTeamName] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerStudents, setRegisterStudents] = useState("");
+  const [registeredTeams, setRegisteredTeams] = useState<Array<{ id: string; teamName: string; memberCount: number }>>([]);
+  const didLogHydrationRef = useRef(false);
 
-  async function handleLogin(username: string, accessCode: string) {
+  useEffect(() => {
+    if (didLogHydrationRef.current) {
+      return;
+    }
+
+    didLogHydrationRef.current = true;
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[registerStudents][mount]", {
+        value: JSON.stringify(registerStudents),
+        length: registerStudents.length,
+        isEmpty: registerStudents === "",
+        isWhitespaceOnly: registerStudents.trim().length === 0,
+      });
+    }
+  }, [registerStudents]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[registerStudents][change]", {
+        value: JSON.stringify(registerStudents),
+        length: registerStudents.length,
+        isEmpty: registerStudents === "",
+        isWhitespaceOnly: registerStudents.trim().length === 0,
+      });
+    }
+  }, [registerStudents]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRegisteredTeams() {
+      try {
+        const payload = await fetchRegisteredTeamNames();
+
+        if (!cancelled) {
+          setRegisteredTeams(payload.teams ?? []);
+        }
+      } catch (loadError) {
+        if (!cancelled && process.env.NODE_ENV !== "production") {
+          console.warn("Failed to fetch registered team names.", loadError);
+        }
+      }
+    }
+
+    void loadRegisteredTeams();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleLogin(teamName: string, password: string) {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await loginArena(username, accessCode);
+      const response = await loginArena(teamName, password);
       window.localStorage.setItem("code-theft-arena-name", response.team.teamName);
       router.push("/dashboard");
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "Failed to enter the arena.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSignup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const studentNumbers = Array.from(
+        new Set(
+          registerStudents
+            .split(/[\s,]+/)
+            .map((value) => value.trim())
+            .filter(Boolean),
+        ),
+      );
+
+      const response = await signupArenaTeam({
+        teamName: registerTeamName,
+        password: registerPassword,
+        studentNumbers,
+      });
+
+      window.localStorage.setItem("code-theft-arena-name", response.team.teamName);
+      setRegisteredTeams((prev) => {
+        if (prev.some((team) => team.teamName.toLowerCase() === response.team.teamName.toLowerCase())) {
+          return prev;
+        }
+
+        return [...prev, {
+          id: response.team.id,
+          teamName: response.team.teamName,
+          memberCount: response.team.members?.length ?? studentNumbers.length,
+        }].sort((a, b) => a.teamName.localeCompare(b.teamName));
+      });
+      router.push("/dashboard");
+    } catch (signupError) {
+      setError(signupError instanceof Error ? signupError.message : "Team registration failed.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAdminLogin(_: string, secret: string) {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await loginAdmin(secret);
+      router.push("/admin");
+    } catch (adminError) {
+      setError(adminError instanceof Error ? adminError.message : "Admin authorization failed.");
     } finally {
       setLoading(false);
     }
@@ -169,19 +281,159 @@ export default function Home() {
                 </div>
 
                 <div className="mt-12 w-full font-forresten max-w-xl">
-                  <AccessForm
-                    onSubmit={handleLogin}
-                    loading={loading}
-                    error={error}
-                    eyebrow=""
-                    title=""
-                    primaryLabel="ENTER YOUR STUDENT ID :-"
-                    secondaryLabel="ENTER YOUR NAME :-"
-                    submitLabel="ENTER THE GAME"
-                    statusLabel="AWAITING CREDENTIAL..."
-                    primaryPlaceholder=""
-                    secondaryPlaceholder=""
-                  />
+                  <div className="mb-4 grid grid-cols-3 gap-2 rounded-2xl border border-rose-500/30 bg-black/50 p-2">
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode("login")}
+                      className={[
+                        "rounded-xl px-3 py-2 text-xs uppercase tracking-[0.24em] transition-all duration-300",
+                        authMode === "login"
+                          ? "bg-cyan-400/20 text-cyan-100 shadow-[0_0_20px_rgba(0,255,255,0.35)]"
+                          : "text-zinc-300 hover:text-cyan-100",
+                      ].join(" ")}
+                    >
+                      Team Login
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode("register")}
+                      className={[
+                        "rounded-xl px-3 py-2 text-xs uppercase tracking-[0.24em] transition-all duration-300",
+                        authMode === "register"
+                          ? "bg-pink-400/20 text-pink-100 shadow-[0_0_20px_rgba(255,0,170,0.35)]"
+                          : "text-zinc-300 hover:text-pink-100",
+                      ].join(" ")}
+                    >
+                      Team Register
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode("admin")}
+                      className={[
+                        "rounded-xl px-3 py-2 text-xs uppercase tracking-[0.24em] transition-all duration-300",
+                        authMode === "admin"
+                          ? "bg-amber-400/20 text-amber-100 shadow-[0_0_20px_rgba(251,191,36,0.35)]"
+                          : "text-zinc-300 hover:text-amber-100",
+                      ].join(" ")}
+                    >
+                      Admin Access
+                    </button>
+                  </div>
+
+                  {authMode === "login" ? (
+                    <AccessForm
+                      onSubmit={handleLogin}
+                      loading={loading}
+                      error={error}
+                      eyebrow=""
+                      title=""
+                      primaryLabel="ENTER TEAM NAME :-"
+                      secondaryLabel="ENTER PASSWORD :-"
+                      submitLabel="ENTER THE GAME"
+                      statusLabel="AUTHORIZING TEAM..."
+                      primaryPlaceholder="e.g. ByteRunners"
+                      secondaryPlaceholder="********"
+                    />
+                  ) : authMode === "register" ? (
+                    <form
+                      onSubmit={handleSignup}
+                      className="rounded-[2rem] border border-lime-400/20 bg-black/70 p-6 shadow-[0_0_40px_rgba(0,255,140,0.14)] backdrop-blur-xl sm:p-8"
+                    >
+                      <div className="space-y-2 text-center">
+                        <p className="text-xs uppercase tracking-[0.45em] text-lime-300/60">NEW TEAM REGISTRATION</p>
+                        <h2 className="text-2xl tracking-[0.08em] text-lime-300 sm:text-3xl">CREATE YOUR CREW</h2>
+                      </div>
+
+                      <div className="mt-6 grid gap-4">
+                        <label className="grid gap-2">
+                          <span className="text-xs uppercase tracking-[0.35em] text-zinc-400">TEAM NAME</span>
+                          <input
+                            value={registerTeamName}
+                            onChange={(event) => setRegisterTeamName(event.target.value)}
+                            className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20"
+                            placeholder="e.g. ByteRunners"
+                            autoComplete="organization"
+                          />
+                        </label>
+
+                        <label className="grid gap-2">
+                          <span className="text-xs uppercase tracking-[0.35em] text-zinc-400">PASSWORD</span>
+                          <input
+                            value={registerPassword}
+                            onChange={(event) => setRegisterPassword(event.target.value)}
+                            type="password"
+                            className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20"
+                            placeholder="Create strong password"
+                            autoComplete="new-password"
+                          />
+                        </label>
+
+                        <label className="grid gap-2">
+                          <span className="text-xs uppercase tracking-[0.35em] text-zinc-400">
+                            STUDENT NUMBERS (space/comma/newline separated)
+                          </span>
+                          <textarea
+                            value={registerStudents}
+                            onChange={(event) => setRegisterStudents(event.target.value)}
+                            className="relative z-10 min-h-28 rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 font-body text-white outline-none transition placeholder:font-body placeholder:text-zinc-300 placeholder:opacity-100 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20"
+                            placeholder="e.g. 2510084, 2510085, 2510086"
+                          />
+                        </label>
+                      </div>
+
+                      {error ? (
+                        <p className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                          {error}
+                        </p>
+                      ) : null}
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="mt-6 w-full rounded-full border border-lime-300/60 bg-lime-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.35em] text-black transition hover:-translate-y-0.5 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {loading ? "REGISTERING..." : "CREATE TEAM"}
+                      </button>
+
+                      <div className="mt-6 rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">Registered Teams</p>
+                          <span className="text-[10px] uppercase tracking-[0.35em] text-cyan-300/70">
+                            {registeredTeams.length} crews
+                          </span>
+                        </div>
+                        <div className="mt-3 max-h-44 space-y-2 overflow-y-auto pr-1">
+                          {registeredTeams.length ? (
+                            registeredTeams.map((team) => (
+                              <div
+                                key={team.id}
+                                className="flex items-center justify-between rounded-xl border border-cyan-400/10 bg-black/40 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-100"
+                              >
+                                <span>{team.teamName}</span>
+                                <span className="text-cyan-300/70">{team.memberCount} members</span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">No teams registered yet.</p>
+                          )}
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    <AccessForm
+                      onSubmit={handleAdminLogin}
+                      loading={loading}
+                      error={error}
+                      eyebrow="Command Access"
+                      title="ENTER ADMIN CONSOLE"
+                      primaryLabel="Operator Name"
+                      secondaryLabel="Admin Secret"
+                      submitLabel="UNLOCK ADMIN"
+                      statusLabel="AUTHORIZING ADMIN..."
+                      primaryPlaceholder="arena-control"
+                      secondaryPlaceholder="ADMIN_API_SECRET"
+                    />
+                  )}
                 </div>
               </div>
             </div>
