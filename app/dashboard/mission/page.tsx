@@ -309,9 +309,9 @@ export default function MissionPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,79,79,0.18),transparent_20%),radial-gradient(circle_at_75%_18%,rgba(34,211,238,0.14),transparent_18%),linear-gradient(180deg,rgba(0,0,0,0.36),rgba(0,0,0,0.95))]" />
       <div className="relative z-10 min-h-screen px-3 pb-4 pt-2 sm:px-4 lg:px-5">
         <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-4">
-          <header className="grid grid-cols-[auto_1fr_auto] items-start gap-4">
+          <header className="flex flex-col gap-4 xl:grid xl:grid-cols-[auto_1fr_auto] xl:items-start">
             <Link href="/dashboard" aria-label="Back to dashboard" className="pt-1">
-              <DecorativeButton className="h-[64px] w-[64px] rounded-[1.1rem] text-slate-900">
+              <DecorativeButton className="h-[54px] w-[54px] rounded-[1.1rem] text-slate-900 sm:h-[64px] sm:w-[64px]">
                 <svg viewBox="0 0 24 24" className="h-7 w-7 stroke-current" fill="none" aria-hidden="true">
                   <path d="M4 5h6v14H4zM14 5h6v14h-6z" strokeWidth="1.6" />
                 </svg>
@@ -319,10 +319,10 @@ export default function MissionPage() {
             </Link>
 
             <div className="pt-3 space-y-3">
-              <div className="font-pricedown text-[2rem] uppercase leading-none tracking-[0.1em] text-fuchsia-500 drop-shadow-[0_0_12px_rgba(217,70,239,0.55)] sm:text-[2.7rem]">
+              <div className="font-pricedown text-[1.65rem] uppercase leading-none tracking-[0.08em] text-fuchsia-500 drop-shadow-[0_0_12px_rgba(217,70,239,0.55)] sm:text-[2.7rem] sm:tracking-[0.1em]">
                 CODE THEFT ARENA
               </div>
-              <div className="mt-2 font-chalet text-[0.72rem] uppercase tracking-[0.42em] text-zinc-300/80 sm:text-[0.82rem]">
+              <div className="mt-2 font-chalet text-[0.68rem] uppercase tracking-[0.28em] text-zinc-300/80 sm:text-[0.82rem] sm:tracking-[0.42em]">
                 Secure connection established
               </div>
               <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
@@ -333,12 +333,12 @@ export default function MissionPage() {
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="rounded-[1.25rem] bg-[#201c0f] px-7 py-2 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
-                <div className="font-pricedown text-[1.45rem] uppercase tracking-[0.1em] text-amber-300 sm:text-[1.8rem]">
+            <div className="flex flex-wrap items-start gap-3 xl:flex-nowrap">
+              <div className="rounded-[1.25rem] bg-[#201c0f] px-4 py-2 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)] sm:px-7">
+                <div className="font-pricedown text-[1.2rem] uppercase tracking-[0.08em] text-amber-300 sm:text-[1.8rem] sm:tracking-[0.1em]">
                   Total Points
                 </div>
-                <div className="mt-1 font-pricedown text-[1.8rem] leading-none text-white sm:text-[2.4rem]">
+                <div className="mt-1 font-pricedown text-[1.5rem] leading-none text-white sm:text-[2.4rem]">
                   {score.toLocaleString()}
                 </div>
               </div>
@@ -349,8 +349,8 @@ export default function MissionPage() {
                     <span className="font-pricedown text-xl leading-none">N</span>
                   </div>
                 </div>
-                <div className="rounded-[1.35rem] border-4 border-cyan-400 px-5 py-1.5 text-center">
-                  <div className="font-pricedown text-[2.25rem] leading-none tracking-[0.08em] text-white sm:text-[3rem]">
+                <div className="rounded-[1.35rem] border-4 border-cyan-400 px-3 py-1 text-center sm:px-5 sm:py-1.5">
+                  <div className="font-pricedown text-[1.8rem] leading-none tracking-[0.08em] text-white sm:text-[3rem]">
                     {timer}
                   </div>
                 </div>
@@ -489,7 +489,7 @@ export default function MissionPage() {
                 <div className="absolute left-0 top-0 h-full w-[14px] bg-[#d8d8d8]" />
                 <div className="absolute left-0 top-0 h-[4px] w-full bg-[#18952d]" />
 
-                <div className="absolute right-0 top-0 rounded-bl-[1.6rem] bg-[#252120] px-5 py-4">
+                <div className="relative ml-auto w-fit rounded-bl-[1.6rem] bg-[#252120] px-4 py-3 sm:absolute sm:right-0 sm:top-0 sm:px-5 sm:py-4">
                   <div className="font-pricedown text-[1.7rem] uppercase tracking-[0.08em] text-white sm:text-[2rem]">
                     Wanted Level
                   </div>
@@ -498,15 +498,15 @@ export default function MissionPage() {
                   </div>
                 </div>
 
-                <div className="flex min-h-[342px] flex-col px-7 py-7 pr-28 sm:px-8 sm:py-8 sm:pr-44">
-                  <div className="font-pricedown text-[1.9rem] uppercase tracking-[0.08em] text-white sm:text-[2.15rem]">
+                <div className="flex min-h-[342px] flex-col px-5 py-6 sm:px-8 sm:py-8 sm:pr-44">
+                  <div className="font-pricedown text-[1.55rem] uppercase tracking-[0.08em] text-white sm:text-[2.15rem]">
                     Question-1
                   </div>
-                  <div className="mt-4 max-w-3xl font-chalet text-[0.92rem] uppercase leading-8 tracking-[0.24em] text-zinc-200/90 sm:text-[1rem]">
+                  <div className="mt-4 max-w-3xl font-chalet text-[0.82rem] uppercase leading-6 tracking-[0.14em] text-zinc-200/90 sm:text-[1rem] sm:leading-8 sm:tracking-[0.24em]">
                     {selectedQuestionBody}
                   </div>
 
-                  <div className="mt-auto max-w-3xl font-chalet text-[0.8rem] uppercase tracking-[0.3em] text-zinc-400">
+                  <div className="mt-auto max-w-3xl font-chalet text-[0.74rem] uppercase tracking-[0.2em] text-zinc-400 sm:tracking-[0.3em]">
                     Objective: {selectedObjective}
                   </div>
                 </div>
@@ -525,8 +525,8 @@ export default function MissionPage() {
                 </div>
               </section>
 
-              <section className="min-h-[94px] bg-[#171717] px-5 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
-                <div className="font-pricedown text-[1.95rem] uppercase leading-none tracking-[0.08em] text-white">
+              <section className="min-h-[94px] bg-[#171717] px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] sm:px-5">
+                <div className="font-pricedown text-[1.6rem] uppercase leading-none tracking-[0.08em] text-white sm:text-[1.95rem]">
                   Answer -1
                 </div>
                 <div className="mt-5 border-b border-white/12 pb-2">
@@ -542,17 +542,17 @@ export default function MissionPage() {
 
               <section className="relative overflow-hidden bg-[#171717] shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
                 <div className="absolute left-0 top-0 h-[4px] w-full bg-[#18952d]" />
-                <div className="grid gap-6 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-start">
+                <div className="grid gap-6 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-start">
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="border-l-4 border-white/90 pl-3">
-                        <div className="font-pricedown text-[1.85rem] uppercase leading-none tracking-[0.08em] text-cyan-400">
+                        <div className="font-pricedown text-[1.55rem] uppercase leading-none tracking-[0.08em] text-cyan-400 sm:text-[1.85rem]">
                           Live Intel
                         </div>
                       </div>
                     </div>
 
-                    <div className="min-h-[170px] max-w-2xl font-chalet text-[0.9rem] uppercase leading-8 tracking-[0.24em] text-zinc-200">
+                    <div className="min-h-[170px] max-w-2xl font-chalet text-[0.82rem] uppercase leading-6 tracking-[0.14em] text-zinc-200 sm:text-[0.9rem] sm:leading-8 sm:tracking-[0.24em]">
                       {isSelectedLevelLive ? (
                         <>
                           <div>
@@ -611,7 +611,7 @@ export default function MissionPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={answerDisabled}
-                  className="rounded-[0.55rem] bg-[#fbbf24] px-6 py-3 font-pricedown text-3xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-[0.55rem] bg-[#fbbf24] px-5 py-3 font-pricedown text-2xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60 sm:px-6 sm:text-3xl"
                 >
                   {submitting ? "Submitting..." : actionLabel}
                 </button>

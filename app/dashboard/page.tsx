@@ -165,12 +165,12 @@ export default function DashboardPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,79,79,0.14),transparent_28%),radial-gradient(circle_at_75%_18%,rgba(34,211,238,0.14),transparent_18%),linear-gradient(180deg,rgba(0,0,0,0.45),rgba(0,0,0,0.95))]" />
 
       <div className="relative z-10 flex min-h-screen flex-col px-3 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4 lg:px-6">
-        <header className="flex items-start justify-between gap-4">
+        <header className="flex flex-col items-start justify-between gap-4 md:flex-row">
           <div className="space-y-3">
-            <div className="font-pricedown text-[2rem] uppercase leading-none tracking-[0.12em] text-fuchsia-500 drop-shadow-[0_0_14px_rgba(217,70,239,0.45)] sm:text-[2.7rem]">
+            <div className="font-pricedown text-[1.65rem] uppercase leading-none tracking-[0.08em] text-fuchsia-500 drop-shadow-[0_0_14px_rgba(217,70,239,0.45)] sm:text-[2.7rem] sm:tracking-[0.12em]">
               CODE THEFT ARENA
             </div>
-            <div className="font-chalet text-[0.72rem] uppercase tracking-[0.42em] text-zinc-300/80 sm:text-[0.85rem]">
+            <div className="font-chalet text-[0.68rem] uppercase tracking-[0.28em] text-zinc-300/80 sm:text-[0.85rem] sm:tracking-[0.42em]">
               Secure connection established
             </div>
             <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
@@ -181,16 +181,16 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex w-full flex-row items-start justify-between gap-3 md:w-auto md:flex-col md:items-end md:justify-start">
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-full border border-rose-400/50 bg-rose-500/10 px-4 py-2 text-[10px] uppercase tracking-[0.28em] text-rose-100 transition-all duration-300 hover:bg-rose-500/20"
+              className="rounded-full border border-rose-400/50 bg-rose-500/10 px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-rose-100 transition-all duration-300 hover:bg-rose-500/20 sm:tracking-[0.28em]"
             >
               Logout
             </button>
             <div className="rounded-[1.6rem] border-4 border-cyan-400 bg-black px-4 py-2 text-right shadow-[0_0_24px_rgba(34,211,238,0.15)] sm:px-5 sm:py-3">
-              <div className="font-pricedown text-[2.7rem] leading-none tracking-[0.08em] text-white sm:text-[4rem]">
+              <div className="font-pricedown text-[2.1rem] leading-none tracking-[0.08em] text-white sm:text-[4rem]">
                 {timer}
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
                     key={`${member.studentNumber}-${index}`}
                     className="flex items-stretch overflow-hidden bg-[#242424] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
                   >
-                    <div className="flex w-full items-center gap-2 border-l-2 border-red-500 px-2 py-2">
+                    <div className="flex w-full flex-wrap items-center gap-2 border-l-2 border-red-500 px-2 py-2 sm:flex-nowrap">
                       <div className="flex h-7 w-7 items-center justify-center border border-white/70 bg-[#1a1a1a] text-white">
                         <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
                           <path d="M12 12.2a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2.3c-4.2 0-8 2.4-8 5.6V22h16v-1.9c0-3.2-3.8-5.6-8-5.6Z" />
@@ -234,7 +234,7 @@ export default function DashboardPage() {
                           {member.studentNumber}
                           </div>
                         </div>
-                      <div className="bg-emerald-950 px-3 py-1 text-[0.62rem] uppercase tracking-[0.22em] text-emerald-400">
+                      <div className="bg-emerald-950 px-3 py-1 text-[0.62rem] uppercase tracking-[0.18em] text-emerald-400 sm:tracking-[0.22em]">
                         Connected
                       </div>
                     </div>
@@ -296,39 +296,39 @@ export default function DashboardPage() {
             </section>
           </aside>
 
-          <section className="relative min-h-[620px] overflow-hidden border-t-[6px] border-t-red-500 bg-[#171717] px-6 py-8 sm:px-8 sm:py-10">
-            <div className="absolute right-0 top-0 rounded-bl-[1.8rem] bg-[#252120] px-4 py-4 sm:px-5 sm:py-5">
+          <section className="relative min-h-[560px] overflow-hidden border-t-[6px] border-t-red-500 bg-[#171717] px-4 py-6 sm:min-h-[620px] sm:px-8 sm:py-10">
+            <div className="relative mb-8 ml-auto w-fit rounded-bl-[1.8rem] bg-[#252120] px-4 py-4 sm:absolute sm:mb-0 sm:right-0 sm:top-0 sm:px-5 sm:py-5">
               <div className="font-pricedown text-2xl uppercase tracking-[0.08em] text-white sm:text-[2.3rem]">
                 Wanted Level
               </div>
               <div className="mt-1 flex items-center gap-1 text-2xl sm:text-[2rem]">
                 {wantedStars.map((filled, index) => (
                   <span key={index} className={filled ? "text-amber-400" : "text-black/75"}>
-                    ★
+                    {"\u2605"}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="flex min-h-[520px] flex-col items-center justify-center text-center">
+            <div className="flex min-h-[460px] flex-col items-center justify-center text-center sm:min-h-[520px]">
               <div className="text-red-500">
                 <svg viewBox="0 0 24 24" className="mx-auto h-24 w-24 fill-current sm:h-28 sm:w-28" aria-hidden="true">
                   <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Zm3 4a2 2 0 0 1 1 3.75V19h-2v-1.25A2 2 0 0 1 12 14Z" />
                 </svg>
               </div>
 
-              <h1 className="mt-8 max-w-4xl font-pricedown text-[2.3rem] uppercase leading-none tracking-[0.12em] text-[#0d9f24] sm:text-[3.5rem] lg:text-[4.7rem]">
+              <h1 className="mt-6 max-w-4xl font-pricedown text-[1.9rem] uppercase leading-none tracking-[0.08em] text-[#0d9f24] sm:mt-8 sm:text-[3.5rem] sm:tracking-[0.12em] lg:text-[4.7rem]">
                 {activeLevel.title}
               </h1>
 
               <Link
                 href="/dashboard/mission"
-                className="mt-10 inline-flex items-center justify-center rounded-[0.6rem] bg-[#fbbf24] px-6 py-4 font-pricedown text-4xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300"
+                className="mt-8 inline-flex items-center justify-center rounded-[0.6rem] bg-[#fbbf24] px-6 py-3 font-pricedown text-3xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 sm:mt-10 sm:py-4 sm:text-4xl"
               >
                 Unlock
               </Link>
 
-              <p className="mt-12 max-w-3xl font-chalet text-[0.95rem] uppercase tracking-[0.24em] text-zinc-100 sm:text-[1.15rem]">
+              <p className="mt-8 max-w-3xl font-chalet text-[0.86rem] uppercase tracking-[0.14em] text-zinc-100 sm:mt-12 sm:text-[1.15rem] sm:tracking-[0.24em]">
                 {"\"You just pinged the system. Now let's see if you can break it.\""}
               </p>
             </div>
@@ -358,3 +358,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

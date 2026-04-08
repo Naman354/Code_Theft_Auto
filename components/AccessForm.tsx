@@ -41,11 +41,11 @@ export function AccessForm({
       }}
     >
       <div className="space-y-2 text-center">
-        <p className="font-[family-name:var(--font-accent)] text-xs uppercase tracking-[0.45em] text-lime-300/60">
+        <p className="font-[family-name:var(--font-accent)] text-xs uppercase tracking-[0.28em] text-lime-300/60 sm:tracking-[0.45em]">
           {eyebrow}
         </p>
         {title ? (
-          <h2 className="font-[family-name:var(--font-body)] text-3xl tracking-[0.08em] text-lime-300 sm:text-4xl">
+          <h2 className="font-[family-name:var(--font-body)] text-2xl tracking-[0.08em] text-lime-300 sm:text-4xl">
             {title}
           </h2>
         ) : null}
@@ -84,7 +84,7 @@ export function AccessForm({
       <button
         type="submit"
         disabled={loading}
-        className="mt-6 w-full rounded-full border border-lime-300/60 bg-lime-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.35em] text-black transition hover:-translate-y-0.5 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-6 w-full rounded-full border border-lime-300/60 bg-lime-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60 sm:tracking-[0.35em]"
       >
         {loading ? statusLabel : submitLabel}
       </button>
