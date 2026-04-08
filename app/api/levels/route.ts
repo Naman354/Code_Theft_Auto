@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { syncTeamProgressForCurrentLevel } from "@/lib/contest-gameplay";
 import { getOrCreateContestState } from "@/lib/contest-state";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ARENA_LEVELS, type ArenaLevelView } from "@/lib/arena-data";
@@ -43,6 +44,7 @@ export async function GET(request: Request) {
       const team = await getAuthenticatedTeamFromRequest(request);
 
       if (team) {
+        await syncTeamProgressForCurrentLevel(team, contestState);
         teamCurrentLevel = team.currentLevel;
 
         return NextResponse.json({

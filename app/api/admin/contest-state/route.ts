@@ -23,6 +23,7 @@ export async function GET(request: Request) {
         currentLevel: contestState.currentLevel,
         levelStartedAt: contestState.levelStartedAt,
         levelEndsAt: contestState.levelEndsAt,
+        elapsedSeconds: contestState.elapsedSeconds ?? 0,
         maxPointsPerQuestion: contestState.maxPointsPerQuestion,
         gracePeriodSeconds: contestState.gracePeriodSeconds,
         durationSeconds: contestState.durationSeconds,

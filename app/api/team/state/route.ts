@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
+import { getAuthenticatedTeamFromRequest } from "@/lib/arena-session";
 import { getOrCreateContestState } from "@/lib/contest-state";
 import { buildCurrentQuestionState, getLevelForContest, syncTeamProgressForCurrentLevel } from "@/lib/contest-gameplay";
 import { connectToDatabase } from "@/lib/mongodb";
-import { getAuthenticatedTeam } from "@/lib/team-access";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDatabase();
 
-    const team = await getAuthenticatedTeam();
+    const team = await getAuthenticatedTeamFromRequest(request);
 
     if (!team) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });

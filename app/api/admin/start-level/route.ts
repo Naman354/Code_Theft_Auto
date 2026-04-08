@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureAdminAccess } from "@/lib/admin-auth";
+import { resetTeamsForLevel } from "@/lib/contest-reset";
 import { getOrCreateContestState } from "@/lib/contest-state";
 import Level from "@/models/Level";
 import { connectToDatabase } from "@/lib/mongodb";
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     const levelToStart = Number.isFinite(requestedLevel)
       ? requestedLevel
       : contestState.currentLevel;
+    const isResumingPausedLevel = contestState.status === "paused" && levelToStart === contestState.currentLevel;
 
     if (!Number.isInteger(levelToStart) || levelToStart < 1) {
       return NextResponse.json({ error: "Level must be a positive integer." }, { status: 400 });
@@ -42,24 +44,34 @@ export async function POST(request: Request) {
     }
 
     const levelStartedAt = new Date();
-    const levelEndsAt = new Date(
-      levelStartedAt.getTime() + contestState.durationSeconds * 1000,
-    );
+    const remainingSeconds = isResumingPausedLevel
+      ? Math.max(0, contestState.durationSeconds - (contestState.elapsedSeconds ?? 0))
+      : contestState.durationSeconds;
+
+    const levelEndsAt = new Date(levelStartedAt.getTime() + remainingSeconds * 1000);
+
+    if (!isResumingPausedLevel) {
+      await resetTeamsForLevel(levelToStart);
+    }
 
     contestState.status = "running";
     contestState.currentLevel = levelToStart;
     contestState.levelStartedAt = levelStartedAt;
     contestState.levelEndsAt = levelEndsAt;
+    contestState.elapsedSeconds = isResumingPausedLevel ? contestState.elapsedSeconds ?? 0 : 0;
     await contestState.save();
 
     return NextResponse.json({
       success: true,
-      message: `Level ${levelToStart} started successfully.`,
+      message: isResumingPausedLevel
+        ? `Level ${levelToStart} resumed successfully.`
+        : `Level ${levelToStart} started successfully. Team progress for this level was reset.`,
       contestState: {
         status: contestState.status,
         currentLevel: contestState.currentLevel,
         levelStartedAt: contestState.levelStartedAt,
         levelEndsAt: contestState.levelEndsAt,
+        elapsedSeconds: contestState.elapsedSeconds,
         durationSeconds: contestState.durationSeconds,
       },
     });

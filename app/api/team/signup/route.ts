@@ -7,7 +7,7 @@ import {
 import { connectToDatabase } from "@/lib/mongodb";
 import { isDuplicateKeyError } from "@/lib/mongoose-errors";
 import { hashPassword, normalizeTeamName } from "@/lib/team-auth";
-import { setTeamSessionCookie } from "@/lib/team-session";
+import { createTeamSessionToken, setTeamSessionCookie } from "@/lib/team-session";
 import TeamModel from "@/models/Team";
 import UserModel from "@/models/User"; // Day 1 Database
 
@@ -150,10 +150,12 @@ export async function POST(req: Request) {
     );
 
     await setTeamSessionCookie(team._id.toString());
+    const token = createTeamSessionToken(team._id.toString());
 
     return NextResponse.json(
       {
         success: true,
+        token,
         team: {
           id: team._id,
           teamName: team.teamName,

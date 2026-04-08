@@ -57,6 +57,7 @@ export type AdminContestState = {
   currentLevel: number;
   levelStartedAt: string | null;
   levelEndsAt: string | null;
+  elapsedSeconds: number;
   maxPointsPerQuestion: number;
   gracePeriodSeconds: number;
   durationSeconds: number;
@@ -168,15 +169,15 @@ export function getArenaToken() {
     return null;
   }
 
-  return window.localStorage.getItem(ARENA_STORAGE_KEY);
+  return window.sessionStorage.getItem(ARENA_STORAGE_KEY);
 }
 
 export function setArenaToken(token: string) {
-  window.localStorage.setItem(ARENA_STORAGE_KEY, token);
+  window.sessionStorage.setItem(ARENA_STORAGE_KEY, token);
 }
 
 export function clearArenaToken() {
-  window.localStorage.removeItem(ARENA_STORAGE_KEY);
+  window.sessionStorage.removeItem(ARENA_STORAGE_KEY);
 }
 
 export function setArenaTeamSnapshot(input: { teamName: string; members: TeamMember[] }) {
@@ -184,8 +185,8 @@ export function setArenaTeamSnapshot(input: { teamName: string; members: TeamMem
     return;
   }
 
-  window.localStorage.setItem(TEAM_NAME_STORAGE_KEY, input.teamName);
-  window.localStorage.setItem(TEAM_MEMBERS_STORAGE_KEY, JSON.stringify(input.members));
+  window.sessionStorage.setItem(TEAM_NAME_STORAGE_KEY, input.teamName);
+  window.sessionStorage.setItem(TEAM_MEMBERS_STORAGE_KEY, JSON.stringify(input.members));
 }
 
 export function getArenaTeamMembers() {
@@ -193,7 +194,7 @@ export function getArenaTeamMembers() {
     return [] as TeamMember[];
   }
 
-  const raw = window.localStorage.getItem(TEAM_MEMBERS_STORAGE_KEY);
+  const raw = window.sessionStorage.getItem(TEAM_MEMBERS_STORAGE_KEY);
 
   if (!raw) {
     return [] as TeamMember[];
@@ -359,8 +360,8 @@ export async function logoutArenaTeam() {
 
   clearArenaToken();
   if (typeof window !== "undefined") {
-    window.localStorage.removeItem(TEAM_NAME_STORAGE_KEY);
-    window.localStorage.removeItem(TEAM_MEMBERS_STORAGE_KEY);
+    window.sessionStorage.removeItem(TEAM_NAME_STORAGE_KEY);
+    window.sessionStorage.removeItem(TEAM_MEMBERS_STORAGE_KEY);
   }
   return parseJsonResponse<{ success: true }>(response);
 }
@@ -462,6 +463,49 @@ export async function startLevel(input?: { level?: number; token?: string | null
 
 export async function nextLevel(token?: string | null) {
   const response = await fetch("/api/admin/next-level", {
+    method: "POST",
+    headers: getAdminHeaders(token),
+    credentials: "include",
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
+}
+
+export async function stopLevel(token?: string | null) {
+  const response = await fetch("/api/admin/stop-level", {
+    method: "POST",
+    headers: getAdminHeaders(token),
+    credentials: "include",
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
+}
+
+export async function restartLevel(input?: { level?: number; token?: string | null }) {
+  const response = await fetch("/api/admin/restart-level", {
+    method: "POST",
+    headers: getAdminHeaders(input?.token),
+    credentials: "include",
+    body: JSON.stringify({
+      level: input?.level,
+    }),
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
+}
+
+export async function stopGame(token?: string | null) {
+  const response = await fetch("/api/admin/stop-game", {
+    method: "POST",
+    headers: getAdminHeaders(token),
+    credentials: "include",
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
+}
+
+export async function restartGame(token?: string | null) {
+  const response = await fetch("/api/admin/restart-game", {
     method: "POST",
     headers: getAdminHeaders(token),
     credentials: "include",

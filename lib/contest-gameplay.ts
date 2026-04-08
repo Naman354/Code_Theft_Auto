@@ -23,6 +23,19 @@ function getElapsedSeconds(levelStartedAt: Date | null, now: Date) {
   return Math.max(0, Math.floor((now.getTime() - levelStartedAt.getTime()) / 1000));
 }
 
+function getContestElapsedSeconds(
+  contestState: InstanceType<typeof ContestState>,
+  now: Date,
+) {
+  const baseElapsed = contestState.elapsedSeconds ?? 0;
+
+  if (contestState.status !== "running") {
+    return baseElapsed;
+  }
+
+  return baseElapsed + getElapsedSeconds(contestState.levelStartedAt ?? null, now);
+}
+
 function getTimeRemainingSeconds(levelEndsAt: Date | null, now: Date) {
   if (!levelEndsAt) {
     return 0;
@@ -84,7 +97,7 @@ export async function syncTeamProgressForCurrentLevel(
     hasChanges = true;
   }
 
-  const elapsedSeconds = getElapsedSeconds(contestState.levelStartedAt ?? null, now);
+  const elapsedSeconds = getContestElapsedSeconds(contestState, now);
 
   if (
     contestState.status === "running" &&
@@ -168,12 +181,15 @@ export function buildCurrentQuestionState(params: {
   const { contestState, team, level, levelState } = params;
   const now = params.now ?? new Date();
 
-  const elapsedSeconds = getElapsedSeconds(contestState.levelStartedAt ?? null, now);
-  const timeRemainingSeconds = getTimeRemainingSeconds(contestState.levelEndsAt ?? null, now);
-  const clue1Visible = contestState.status === "running" && elapsedSeconds >= contestState.clue1UnlockSeconds;
-  const clue2Visible = contestState.status === "running" && elapsedSeconds >= contestState.clue2UnlockSeconds;
+  const elapsedContestSeconds = getContestElapsedSeconds(contestState, now);
+  const timeRemainingSeconds =
+    contestState.status === "paused"
+      ? Math.max(0, contestState.durationSeconds - elapsedContestSeconds)
+      : getTimeRemainingSeconds(contestState.levelEndsAt ?? null, now);
+  const clue1Visible = contestState.status === "running" && elapsedContestSeconds >= contestState.clue1UnlockSeconds;
+  const clue2Visible = contestState.status === "running" && elapsedContestSeconds >= contestState.clue2UnlockSeconds;
   const timeDecay = calculateTimeDecay(
-    Math.min(elapsedSeconds, contestState.durationSeconds),
+    Math.min(elapsedContestSeconds, contestState.durationSeconds),
     contestState.gracePeriodSeconds,
     contestState.decayPerSecond,
   );
@@ -204,7 +220,7 @@ export function buildCurrentQuestionState(params: {
     timer: {
       levelStartedAt: contestState.levelStartedAt,
       levelEndsAt: contestState.levelEndsAt,
-      elapsedSeconds,
+      elapsedSeconds: elapsedContestSeconds,
       timeRemainingSeconds,
       durationSeconds: contestState.durationSeconds,
     },
@@ -239,7 +255,7 @@ export function buildScoringSnapshot(params: {
   const { contestState, levelState } = params;
   const now = params.now ?? new Date();
 
-  const elapsedSeconds = getElapsedSeconds(contestState.levelStartedAt ?? null, now);
+  const elapsedSeconds = getContestElapsedSeconds(contestState, now);
   const responseTimeSeconds = Math.min(elapsedSeconds, contestState.durationSeconds);
   const timeDecay = calculateTimeDecay(
     responseTimeSeconds,

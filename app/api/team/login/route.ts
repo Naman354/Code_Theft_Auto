@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getMinPasswordLength } from "@/lib/contest-config";
 import { connectToDatabase } from "@/lib/mongodb";
 import { normalizeTeamName, verifyPassword } from "@/lib/team-auth";
-import { setTeamSessionCookie } from "@/lib/team-session";
+import { createTeamSessionToken, setTeamSessionCookie } from "@/lib/team-session";
 import Team from "@/models/Team";
 
 export async function POST(req: Request) {
@@ -42,9 +42,11 @@ export async function POST(req: Request) {
     await team.save();
 
     await setTeamSessionCookie(team._id.toString());
+    const token = createTeamSessionToken(team._id.toString());
 
     return NextResponse.json({
       success: true,
+      token,
       team: {
         id: team._id,
         teamName: team.teamName,

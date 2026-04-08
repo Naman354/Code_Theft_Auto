@@ -6,9 +6,9 @@ import { AdminButton } from "@/components/admin/AdminButton";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminModal } from "@/components/admin/AdminModal";
-import { fetchContestState, nextLevel, seedLevels, startLevel, type AdminContestState } from "@/services/arena-api";
+import { fetchContestState, nextLevel, restartGame, restartLevel, seedLevels, startLevel, stopGame, stopLevel, type AdminContestState } from "@/services/arena-api";
 
-type ActionType = "start" | "next" | "seed" | null;
+type ActionType = "start" | "next" | "seed" | "stop" | "restart" | "stop_game" | "restart_game" | null;
 
 export default function AdminContestPage() {
   const [contestState, setContestState] = useState<AdminContestState | null>(null);
@@ -51,6 +51,34 @@ export default function AdminContestPage() {
         confirmLabel: "Advance",
       };
     }
+    if (modalAction === "stop") {
+      return {
+        title: "Pause Current Level?",
+        message: "This freezes the current level timer and clue progression until you start the same level again.",
+        confirmLabel: "Pause Level",
+      };
+    }
+    if (modalAction === "restart") {
+      return {
+        title: "Restart Selected Level?",
+        message: "This resets team progress for the selected level and starts its timer again from zero.",
+        confirmLabel: "Restart Level",
+      };
+    }
+    if (modalAction === "stop_game") {
+      return {
+        title: "Stop Entire Game?",
+        message: "This ends the contest for all teams and sends them back to the landing dashboard state.",
+        confirmLabel: "Stop Game",
+      };
+    }
+    if (modalAction === "restart_game") {
+      return {
+        title: "Restart Entire Game?",
+        message: "This resets all teams, scores, submissions, and returns the contest to Level 1.",
+        confirmLabel: "Restart Game",
+      };
+    }
     if (modalAction === "seed") {
       return {
         title: "Reseed Levels?",
@@ -73,6 +101,14 @@ export default function AdminContestPage() {
         await startLevel({ level: startLevelNumber });
       } else if (modalAction === "next") {
         await nextLevel();
+      } else if (modalAction === "stop") {
+        await stopLevel();
+      } else if (modalAction === "restart") {
+        await restartLevel({ level: startLevelNumber });
+      } else if (modalAction === "stop_game") {
+        await stopGame();
+      } else if (modalAction === "restart_game") {
+        await restartGame();
       } else if (modalAction === "seed") {
         await seedLevels();
       }
@@ -102,7 +138,7 @@ export default function AdminContestPage() {
         </div>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <AdminCard title="Current Level" value={contestState?.currentLevel ?? "-"} helper="Live active level" />
         <AdminCard
           title="Contest Timer"
@@ -123,6 +159,11 @@ export default function AdminContestPage() {
           }
           helper="Clue 1 and clue 2 unlock timers"
         />
+        <AdminCard
+          title="Elapsed Time"
+          value={contestState ? `${contestState.elapsedSeconds}s` : "-"}
+          helper="Frozen when the level is paused"
+        />
       </section>
 
       <section className="rounded-2xl border border-cyan-300/20 bg-black/35 p-5 backdrop-blur-xl">
@@ -141,13 +182,32 @@ export default function AdminContestPage() {
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
           <AdminButton type="button" tone="cyan" onClick={() => setModalAction("start")} disabled={busy || loading}>
-            Start Level
+            {contestState?.status === "paused" && startLevelNumber === contestState.currentLevel ? "Resume Level" : "Start Level"}
           </AdminButton>
           <AdminButton type="button" tone="pink" onClick={() => setModalAction("next")} disabled={busy || loading}>
             Next Level
           </AdminButton>
+          <AdminButton
+            type="button"
+            tone="amber"
+            onClick={() => setModalAction("stop")}
+            disabled={busy || loading || contestState?.status !== "running"}
+          >
+            Stop Level
+          </AdminButton>
+          <AdminButton type="button" tone="pink" onClick={() => setModalAction("restart")} disabled={busy || loading}>
+            Restart Level
+          </AdminButton>
           <AdminButton type="button" tone="amber" onClick={() => setModalAction("seed")} disabled={busy || loading}>
             Seed Levels
+          </AdminButton>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3 border-t border-zinc-800 pt-4">
+          <AdminButton type="button" tone="amber" onClick={() => setModalAction("stop_game")} disabled={busy || loading}>
+            Stop Game
+          </AdminButton>
+          <AdminButton type="button" tone="pink" onClick={() => setModalAction("restart_game")} disabled={busy || loading}>
+            Restart Game
           </AdminButton>
         </div>
 

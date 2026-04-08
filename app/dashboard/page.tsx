@@ -10,6 +10,7 @@ import {
   fetchArenaTeamState,
   getArenaTeamMembers,
   getArenaToken,
+  setArenaTeamSnapshot,
   logoutArenaTeam,
 } from "@/services/arena-api";
 
@@ -33,6 +34,14 @@ function getLevelStatusLabel(status: ArenaLevelView["status"]) {
   }
 }
 
+function getBlueprintLabel(level: ArenaLevelView) {
+  if (level.levelNumber === 5) {
+    return "Surprise Bonus";
+  }
+
+  return `lvl ${level.levelNumber}: ${level.title.replace(/^LEVEL \d+ - /, "")}`;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [teamName, setTeamName] = useState("SYSTEM OPERATOR");
@@ -43,7 +52,11 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const activeLevel = useMemo(
-    () => levels.find((level) => level.status === "active") ?? levels[0] ?? getFallbackLevels()[0],
+    () =>
+      levels.find((level) => level.status === "active") ??
+      levels.find((level) => level.status === "unlocked") ??
+      levels[0] ??
+      getFallbackLevels()[0],
     [levels],
   );
 
@@ -52,7 +65,7 @@ export default function DashboardPage() {
   }, [activeLevel.levelNumber]);
 
   useEffect(() => {
-    const storedName = window.localStorage.getItem("code-theft-arena-name");
+    const storedName = typeof window === "undefined" ? null : window.sessionStorage.getItem("code-theft-arena-name");
     if (storedName) {
       setTeamName(storedName);
     }
@@ -74,7 +87,10 @@ export default function DashboardPage() {
         const fetchedLevels = (payload as { levels?: ArenaLevelView[] }).levels;
         if (fetchedLevels?.length) {
           setLevels(fetchedLevels);
-          const active = fetchedLevels.find((level) => level.status === "active") ?? fetchedLevels[0];
+          const active =
+            fetchedLevels.find((level) => level.status === "active") ??
+            fetchedLevels.find((level) => level.status === "unlocked") ??
+            fetchedLevels[0];
           setTimer(active.timeRemaining ?? active.duration);
         } else {
           const fallbackLevels = getFallbackLevels();
@@ -85,7 +101,10 @@ export default function DashboardPage() {
         if (teamPayload?.team) {
           setTeamName(teamPayload.team.teamName);
           setTeamMembers(teamPayload.team.members ?? []);
-          window.localStorage.setItem("code-theft-arena-name", teamPayload.team.teamName);
+          setArenaTeamSnapshot({
+            teamName: teamPayload.team.teamName,
+            members: teamPayload.team.members ?? [],
+          });
         }
       } catch (loadError) {
         if (cancelled) {
@@ -108,9 +127,13 @@ export default function DashboardPage() {
     }
 
     void loadArenaSnapshot();
+    const intervalId = window.setInterval(() => {
+      void loadArenaSnapshot();
+    }, 5000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -120,7 +143,9 @@ export default function DashboardPage() {
     } catch {
       // Ignore logout failures and return the user to entry page.
     } finally {
-      window.localStorage.removeItem("code-theft-arena-name");
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem("code-theft-arena-name");
+      }
       router.push("/");
     }
   }
@@ -141,12 +166,18 @@ export default function DashboardPage() {
 
       <div className="relative z-10 flex min-h-screen flex-col px-3 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4 lg:px-6">
         <header className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
+          <div className="space-y-3">
             <div className="font-pricedown text-[2rem] uppercase leading-none tracking-[0.12em] text-fuchsia-500 drop-shadow-[0_0_14px_rgba(217,70,239,0.45)] sm:text-[2.7rem]">
               CODE THEFT ARENA
             </div>
             <div className="font-chalet text-[0.72rem] uppercase tracking-[0.42em] text-zinc-300/80 sm:text-[0.85rem]">
               Secure connection established
+            </div>
+            <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
+              <span className="font-pricedown text-lg uppercase tracking-[0.16em] text-cyan-200 [text-shadow:0_0_12px_rgba(34,211,238,0.7)] animate-pulse sm:text-xl">
+                {teamName}
+              </span>
             </div>
           </div>
 
@@ -220,7 +251,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-4 px-4">
-                {levels.slice(0, 4).map((level, index) => (
+                {levels.map((level) => (
                   <div key={level.levelNumber} className="flex items-start gap-3">
                     <div
                       className={[
@@ -237,7 +268,7 @@ export default function DashboardPage() {
                           <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Zm3 4a2 2 0 0 1 1 3.75V19h-2v-1.25A2 2 0 0 1 12 14Z" />
                         </svg>
                       ) : (
-                        <span className="text-[0.7rem] font-bold">{index + 1}</span>
+                        <span className="text-[0.7rem] font-bold">{level.levelNumber}</span>
                       )}
                     </div>
 
@@ -250,8 +281,13 @@ export default function DashboardPage() {
                       >
                         {getLevelStatusLabel(level.status)}
                       </div>
-                      <div className="mt-1 font-chalet text-[0.9rem] uppercase tracking-[0.22em] text-zinc-100">
-                        lvl {level.levelNumber}: {level.title.replace(/^LEVEL \d+ - /, "")}
+                      <div
+                        className={[
+                          "mt-1 font-chalet text-[0.9rem] uppercase tracking-[0.22em]",
+                          level.levelNumber === 5 ? "text-amber-300" : "text-zinc-100",
+                        ].join(" ")}
+                      >
+                        {getBlueprintLabel(level)}
                       </div>
                     </div>
                   </div>

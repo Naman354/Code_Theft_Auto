@@ -15,47 +15,37 @@ export async function POST(request: Request) {
 
     await connectToDatabase();
 
+    const body = await request.json().catch(() => ({}));
     const contestState = await getOrCreateContestState();
-    const nextLevel = contestState.currentLevel + 1;
+    const requestedLevel = Number(body.level ?? contestState.currentLevel);
 
-    if (nextLevel > contestState.totalLevels) {
-      contestState.status = "completed";
-      contestState.levelStartedAt = null;
-      contestState.levelEndsAt = null;
-      contestState.elapsedSeconds = 0;
-      await contestState.save();
-
-      return NextResponse.json({
-        success: true,
-        message: "Contest is complete. No more levels remain.",
-        contestState: {
-          status: contestState.status,
-          currentLevel: contestState.currentLevel,
-          levelStartedAt: contestState.levelStartedAt,
-          levelEndsAt: contestState.levelEndsAt,
-          elapsedSeconds: contestState.elapsedSeconds,
-        },
-      });
+    if (!Number.isInteger(requestedLevel) || requestedLevel < 1) {
+      return NextResponse.json({ error: "Level must be a positive integer." }, { status: 400 });
     }
 
-    const nextLevelExists = await Level.exists({ levelNumber: nextLevel });
-
-    if (!nextLevelExists) {
+    if (requestedLevel > contestState.totalLevels) {
       return NextResponse.json(
-        { error: `Level ${nextLevel} has not been configured yet.` },
+        { error: "Requested level exceeds the configured total levels." },
+        { status: 400 },
+      );
+    }
+
+    const levelExists = await Level.exists({ levelNumber: requestedLevel });
+
+    if (!levelExists) {
+      return NextResponse.json(
+        { error: `Level ${requestedLevel} has not been configured yet.` },
         { status: 404 },
       );
     }
 
-    await resetTeamsForLevel(nextLevel);
+    await resetTeamsForLevel(requestedLevel);
 
     const levelStartedAt = new Date();
-    const levelEndsAt = new Date(
-      levelStartedAt.getTime() + contestState.durationSeconds * 1000,
-    );
+    const levelEndsAt = new Date(levelStartedAt.getTime() + contestState.durationSeconds * 1000);
 
     contestState.status = "running";
-    contestState.currentLevel = nextLevel;
+    contestState.currentLevel = requestedLevel;
     contestState.levelStartedAt = levelStartedAt;
     contestState.levelEndsAt = levelEndsAt;
     contestState.elapsedSeconds = 0;
@@ -63,7 +53,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Level ${nextLevel} started successfully.`,
+      message: `Level ${requestedLevel} restarted successfully.`,
       contestState: {
         status: contestState.status,
         currentLevel: contestState.currentLevel,
@@ -74,7 +64,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Next Level Error:", error);
-    return NextResponse.json({ error: "Failed to advance to the next level." }, { status: 500 });
+    console.error("Restart Level Error:", error);
+    return NextResponse.json({ error: "Failed to restart level." }, { status: 500 });
   }
 }

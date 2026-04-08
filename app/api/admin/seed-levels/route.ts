@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureAdminAccess } from "@/lib/admin-auth";
 import { ARENA_LEVELS } from "@/lib/arena-data";
+import { getOrCreateContestState } from "@/lib/contest-state";
 import { connectToDatabase } from "@/lib/mongodb";
 import LevelModel from "@/models/Level";
 
@@ -49,6 +50,12 @@ export async function POST(request: Request) {
 
     await LevelModel.deleteMany({});
     const insertedLevels = await LevelModel.insertMany(inputLevels);
+    const contestState = await getOrCreateContestState();
+    contestState.totalLevels = insertedLevels.length;
+    if (contestState.currentLevel > contestState.totalLevels) {
+      contestState.currentLevel = contestState.totalLevels;
+    }
+    await contestState.save();
 
     return NextResponse.json(
       {

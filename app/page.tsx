@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { AccessForm } from "@/components/AccessForm";
-import { fetchRegisteredTeamNames, loginAdmin, loginArena, signupArenaTeam } from "@/services/arena-api";
+import { fetchRegisteredTeamNames, loginAdmin, loginArena, setArenaTeamSnapshot, signupArenaTeam } from "@/services/arena-api";
 import character5  from "@/public/assets/images/character5.png";
 const navItems = [
   { label: "Mission", href: "#mission" },
@@ -81,7 +81,10 @@ export default function Home() {
 
     try {
       const response = await loginArena(teamName, password);
-      window.localStorage.setItem("code-theft-arena-name", response.team.teamName);
+      setArenaTeamSnapshot({
+        teamName: response.team.teamName,
+        members: response.team.members ?? [],
+      });
       router.push("/dashboard");
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "Failed to enter the arena.");
@@ -111,7 +114,10 @@ export default function Home() {
         studentNumbers,
       });
 
-      window.localStorage.setItem("code-theft-arena-name", response.team.teamName);
+      setArenaTeamSnapshot({
+        teamName: response.team.teamName,
+        members: response.team.members ?? [],
+      });
       setRegisteredTeams((prev) => {
         if (prev.some((team) => team.teamName.toLowerCase() === response.team.teamName.toLowerCase())) {
           return prev;

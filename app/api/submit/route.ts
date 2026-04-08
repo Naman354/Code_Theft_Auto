@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ARENA_LEVELS, getArenaLevelByNumber } from "@/lib/arena-data";
+import { getArenaLevelByNumber } from "@/lib/arena-data";
 import { buildScoringSnapshot, getLevelForContest, normalizeAnswer, syncTeamProgressForCurrentLevel } from "@/lib/contest-gameplay";
 import { getOrCreateContestState } from "@/lib/contest-state";
 import { connectToDatabase } from "@/lib/mongodb";
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     levelState.lockedScore = lockedScore;
     levelState.solvedAt = now;
     team.totalLockedScore += lockedScore;
-    team.currentLevel = Math.min(contestState.currentLevel + 1, ARENA_LEVELS.length);
+    team.currentLevel = contestState.currentLevel;
     await team.save();
 
     await Submission.create({
@@ -102,9 +102,9 @@ export async function POST(request: Request) {
       message: "Mission progress recorded.",
       state: {
         currentLevel: contestState.currentLevel,
-        nextLevel: team.currentLevel,
         totalLockedScore: team.totalLockedScore,
         levelStatus: levelState.status,
+        awaitingAdminAdvance: true,
       },
     });
   } catch (error) {

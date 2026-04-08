@@ -12,6 +12,7 @@ const contestStateSchema = new Schema(
     currentLevel: { type: Number, required: true, default: 1, min: 1 },
     levelStartedAt: { type: Date, default: null },
     levelEndsAt: { type: Date, default: null },
+    elapsedSeconds: { type: Number, required: true, default: 0, min: 0 },
     maxPointsPerQuestion: { type: Number, required: true, default: 1400, min: 0 },
     gracePeriodSeconds: { type: Number, required: true, default: 30, min: 0 },
     durationSeconds: { type: Number, required: true, default: 900, min: 1 },

@@ -10,6 +10,7 @@ import {
   fetchArenaTeamState,
   getArenaTeamMembers,
   getArenaToken,
+  setArenaTeamSnapshot,
   submitArenaAnswer,
 } from "@/services/arena-api";
 
@@ -35,6 +36,14 @@ function getLevelStatusLabel(status: ArenaLevelView["status"]) {
     default:
       return "LOCKED...";
   }
+}
+
+function getBlueprintLabel(level: ArenaLevelView) {
+  if (level.levelNumber === 5) {
+    return "SURPRISE BONUS";
+  }
+
+  return `lvl ${level.levelNumber}: ${level.title.replace(/^LEVEL \d+ - /, "")}`;
 }
 
 function StarMeter({ value }: { value: number }) {
@@ -104,7 +113,7 @@ export default function MissionPage() {
 
   useEffect(() => {
     const token = getArenaToken();
-    const storedName = window.localStorage.getItem("code-theft-arena-name");
+    const storedName = typeof window === "undefined" ? null : window.sessionStorage.getItem("code-theft-arena-name");
     if (storedName) {
       setTeamName(storedName);
     }
@@ -147,12 +156,20 @@ export default function MissionPage() {
         if (teamPayload?.team) {
           setTeamName(teamPayload.team.teamName);
           setTeamMembers(teamPayload.team.members ?? []);
-          window.localStorage.setItem("code-theft-arena-name", teamPayload.team.teamName);
+          setArenaTeamSnapshot({
+            teamName: teamPayload.team.teamName,
+            members: teamPayload.team.members ?? [],
+          });
         }
 
         setCurrentQuestionPayload(questionPayload);
         if (typeof questionPayload.state.totalLockedScore === "number") {
           setScore(questionPayload.state.totalLockedScore);
+        }
+
+        if (questionPayload.state.contestStatus === "completed" && !cancelled) {
+          window.location.href = "/dashboard";
+          return;
         }
       } catch (loadError) {
         if (cancelled) {
@@ -243,6 +260,39 @@ export default function MissionPage() {
     isSelectedLevelLive
       ? `Live score: ${currentQuestionPayload?.state.scoring.liveScore ?? 0}`
       : selectedLevel.objective;
+  const currentTimerState = currentQuestionPayload?.state.timer;
+  const currentLevelState = currentQuestionPayload?.state.levelState;
+  const currentScoringState = currentQuestionPayload?.state.scoring;
+  const countdownToClueOne = currentScoringState
+    ? Math.max(0, currentScoringState.clue1UnlockSeconds - (currentTimerState?.elapsedSeconds ?? 0))
+    : 0;
+  const countdownToClueTwo = currentScoringState
+    ? Math.max(0, currentScoringState.clue2UnlockSeconds - (currentTimerState?.elapsedSeconds ?? 0))
+    : 0;
+  const answerDisabled =
+    submitting ||
+    !isSelectedLevelLive ||
+    currentQuestionPayload?.state.contestStatus !== "running" ||
+    currentLevelState?.status === "solved" ||
+    currentLevelState?.status === "expired";
+  const answerPlaceholder =
+    currentQuestionPayload?.state.contestStatus === "paused"
+      ? "Level paused by admin..."
+      : currentLevelState?.status === "solved"
+        ? "Waiting for admin to start the next level..."
+        : currentLevelState?.status === "expired"
+          ? "This level has expired."
+          : "Enter your answer...";
+  const actionLabel =
+    currentQuestionPayload?.state.contestStatus === "paused"
+      ? "Paused"
+      : currentQuestionPayload?.state.contestStatus !== "running"
+        ? "Waiting For Admin"
+        : currentLevelState?.status === "solved"
+          ? "Answered"
+          : currentLevelState?.status === "expired"
+            ? "Expired"
+            : "Submit Answer";
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
@@ -268,12 +318,18 @@ export default function MissionPage() {
               </DecorativeButton>
             </Link>
 
-            <div className="pt-3">
+            <div className="pt-3 space-y-3">
               <div className="font-pricedown text-[2rem] uppercase leading-none tracking-[0.1em] text-fuchsia-500 drop-shadow-[0_0_12px_rgba(217,70,239,0.55)] sm:text-[2.7rem]">
                 CODE THEFT ARENA
               </div>
               <div className="mt-2 font-chalet text-[0.72rem] uppercase tracking-[0.42em] text-zinc-300/80 sm:text-[0.82rem]">
                 Secure connection established
+              </div>
+              <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
+                <span className="font-pricedown text-lg uppercase tracking-[0.16em] text-cyan-200 [text-shadow:0_0_12px_rgba(34,211,238,0.7)] animate-pulse sm:text-xl">
+                  {teamName}
+                </span>
               </div>
             </div>
 
@@ -363,7 +419,7 @@ export default function MissionPage() {
                 </div>
 
                 <div className="space-y-5 px-4">
-                  {levels.slice(0, 4).map((level) => {
+                  {levels.map((level) => {
                     const isActive = level.status === "active";
                     const isUnlocked = level.status === "unlocked" || level.status === "completed" || isActive;
 
@@ -405,8 +461,13 @@ export default function MissionPage() {
                           >
                             {getLevelStatusLabel(level.status)}
                           </div>
-                          <div className="mt-1 font-chalet text-[0.88rem] uppercase tracking-[0.2em] text-zinc-100">
-                            lvl {level.levelNumber}: {level.title.replace(/^LEVEL \d+ - /, "")}
+                          <div
+                            className={[
+                              "mt-1 font-chalet text-[0.88rem] uppercase tracking-[0.2em]",
+                              level.levelNumber === 5 ? "text-amber-300" : "text-zinc-100",
+                            ].join(" ")}
+                          >
+                            {getBlueprintLabel(level)}
                           </div>
                         </div>
                       </button>
@@ -472,9 +533,9 @@ export default function MissionPage() {
                   <input
                     value={answer}
                     onChange={(event) => setAnswer(event.target.value)}
-                    disabled={selectedLevel.status === "locked" || submitting}
+                    disabled={answerDisabled}
                     className="w-full border-0 bg-transparent font-chalet text-[0.95rem] uppercase tracking-[0.2em] text-white outline-none placeholder:text-zinc-600"
-                    placeholder="Enter your answer..."
+                    placeholder={answerPlaceholder}
                   />
                 </div>
               </section>
@@ -494,9 +555,13 @@ export default function MissionPage() {
                     <div className="min-h-[170px] max-w-2xl font-chalet text-[0.9rem] uppercase leading-8 tracking-[0.24em] text-zinc-200">
                       {isSelectedLevelLive ? (
                         <>
-                          <div>{clueOne ?? "Clue 1 is still locked. It will appear when the admin timer reaches the first unlock window."}</div>
+                          <div>
+                            {clueOne ??
+                              `Clue 1 locked. Reveals in ${formatArenaTime(countdownToClueOne)} while the level timer is running.`}
+                          </div>
                           <div className="mt-4 border-t border-white/10 pt-4">
-                            {clueTwo ?? "Clue 2 is still locked. It unlocks later in the same timer cycle."}
+                            {clueTwo ??
+                              `Clue 2 locked. Reveals in ${formatArenaTime(countdownToClueTwo)} while the level timer is running.`}
                           </div>
                         </>
                       ) : (
@@ -509,6 +574,9 @@ export default function MissionPage() {
                       )}
                       <div className="mt-4 text-[0.72rem] tracking-[0.28em] text-zinc-500">
                         Penalties: {currentQuestionPayload?.state.scoring.clue1Penalty ?? "-"} / {currentQuestionPayload?.state.scoring.clue2Penalty ?? "-"}
+                      </div>
+                      <div className="mt-2 text-[0.72rem] tracking-[0.28em] text-zinc-500">
+                        Status: {currentQuestionPayload?.state.contestStatus ?? "unknown"} / {currentLevelState?.status ?? "unknown"}
                       </div>
                     </div>
                   </div>
@@ -542,14 +610,20 @@ export default function MissionPage() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={submitting || selectedLevel.status === "locked"}
+                  disabled={answerDisabled}
                   className="rounded-[0.55rem] bg-[#fbbf24] px-6 py-3 font-pricedown text-3xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {submitting ? "Unlock..." : "Unlock"}
+                  {submitting ? "Submitting..." : actionLabel}
                 </button>
 
                 <div className="font-chalet text-[0.72rem] uppercase tracking-[0.28em] text-zinc-500">
-                  {loading ? "Syncing arena..." : "Ready"}
+                  {loading
+                    ? "Syncing arena..."
+                    : currentLevelState?.status === "solved"
+                      ? "Waiting for admin to launch the next level"
+                      : currentQuestionPayload?.state.contestStatus === "paused"
+                        ? "Level paused by admin"
+                        : "Ready"}
                 </div>
               </div>
             </section>

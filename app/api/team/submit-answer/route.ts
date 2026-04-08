@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAuthenticatedTeamFromRequest } from "@/lib/arena-session";
 import {
   buildScoringSnapshot,
   getLevelForContest,
@@ -8,14 +9,13 @@ import {
 import { getOrCreateContestState } from "@/lib/contest-state";
 import { connectToDatabase } from "@/lib/mongodb";
 import { isDuplicateKeyError } from "@/lib/mongoose-errors";
-import { getAuthenticatedTeam } from "@/lib/team-access";
 import Submission from "@/models/Submission";
 
 export async function POST(req: Request) {
   try {
     await connectToDatabase();
 
-    const team = await getAuthenticatedTeam();
+    const team = await getAuthenticatedTeamFromRequest(req);
 
     if (!team) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     levelState.lockedScore = lockedScore;
     levelState.solvedAt = now;
     team.totalLockedScore += lockedScore;
-    team.currentLevel = Math.min(contestState.currentLevel + 1, contestState.totalLevels);
+    team.currentLevel = contestState.currentLevel;
     await team.save();
 
     await Submission.create({
@@ -109,10 +109,10 @@ export async function POST(req: Request) {
       lockedScore,
       state: {
         currentLevel: contestState.currentLevel,
-        nextLevel: team.currentLevel,
         totalLockedScore: team.totalLockedScore,
         levelStatus: levelState.status,
         solvedAt: levelState.solvedAt,
+        awaitingAdminAdvance: true,
       },
     });
   } catch (error) {
