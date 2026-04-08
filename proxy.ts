@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
   const adminSessionToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
 
   if (!sessionToken && !adminSessionToken) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/admin-login", request.url));
   }
 
   // Optimistic proxy check only. Strong admin authorization happens in admin layout and API handlers.

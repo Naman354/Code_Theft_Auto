@@ -8,7 +8,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const allowed = await hasAdminAccessFromCookies();
 
   if (!allowed) {
-    redirect("/");
+    redirect("/admin-login");
   }
 
   return (

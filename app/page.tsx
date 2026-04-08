@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { AccessForm } from "@/components/AccessForm";
-import { fetchRegisteredTeamNames, loginAdmin, loginArena, setArenaTeamSnapshot, signupArenaTeam } from "@/services/arena-api";
+import { fetchRegisteredTeamNames, loginArena, setArenaTeamSnapshot, signupArenaTeam } from "@/services/arena-api";
 import character5  from "@/public/assets/images/character5.png";
 const navItems = [
   { label: "Mission", href: "#mission" },
@@ -15,7 +15,7 @@ const navItems = [
 
 export default function Home() {
   const router = useRouter();
-  const [authMode, setAuthMode] = useState<"login" | "register" | "admin">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [registerTeamName, setRegisterTeamName] = useState("");
@@ -132,20 +132,6 @@ export default function Home() {
       router.push("/dashboard");
     } catch (signupError) {
       setError(signupError instanceof Error ? signupError.message : "Team registration failed.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleAdminLogin(_: string, secret: string) {
-    setLoading(true);
-    setError(null);
-
-    try {
-      await loginAdmin(secret);
-      router.push("/admin");
-    } catch (adminError) {
-      setError(adminError instanceof Error ? adminError.message : "Admin authorization failed.");
     } finally {
       setLoading(false);
     }
@@ -287,7 +273,7 @@ export default function Home() {
                 </div>
 
                 <div className="mt-8 w-full max-w-xl font-forresten sm:mt-12">
-                  <div className="mb-4 grid grid-cols-1 gap-2 rounded-2xl border border-rose-500/30 bg-black/50 p-2 sm:grid-cols-3">
+                  <div className="mb-4 grid grid-cols-1 gap-2 rounded-2xl border border-rose-500/30 bg-black/50 p-2 sm:grid-cols-2">
                     <button
                       type="button"
                       onClick={() => setAuthMode("login")}
@@ -312,18 +298,6 @@ export default function Home() {
                     >
                       Team Register
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setAuthMode("admin")}
-                      className={[
-                        "rounded-xl px-3 py-2 text-xs uppercase tracking-[0.18em] transition-all duration-300 sm:tracking-[0.24em]",
-                        authMode === "admin"
-                          ? "bg-amber-400/20 text-amber-100 shadow-[0_0_20px_rgba(251,191,36,0.35)]"
-                          : "text-zinc-300 hover:text-amber-100",
-                      ].join(" ")}
-                    >
-                      Admin Access
-                    </button>
                   </div>
 
                   {authMode === "login" ? (
@@ -340,7 +314,7 @@ export default function Home() {
                       primaryPlaceholder="e.g. ByteRunners"
                       secondaryPlaceholder="********"
                     />
-                  ) : authMode === "register" ? (
+                  ) : (
                     <form
                       onSubmit={handleSignup}
                       className="rounded-[2rem] border border-lime-400/20 bg-black/70 p-6 shadow-[0_0_40px_rgba(0,255,140,0.14)] backdrop-blur-xl sm:p-8"
@@ -425,20 +399,6 @@ export default function Home() {
                         </div>
                       </div>
                     </form>
-                  ) : (
-                    <AccessForm
-                      onSubmit={handleAdminLogin}
-                      loading={loading}
-                      error={error}
-                      eyebrow="Command Access"
-                      title="ENTER ADMIN CONSOLE"
-                      primaryLabel="Operator Name"
-                      secondaryLabel="Admin Secret"
-                      submitLabel="UNLOCK ADMIN"
-                      statusLabel="AUTHORIZING ADMIN..."
-                      primaryPlaceholder="arena-control"
-                      secondaryPlaceholder="ADMIN_API_SECRET"
-                    />
                   )}
                 </div>
               </div>
