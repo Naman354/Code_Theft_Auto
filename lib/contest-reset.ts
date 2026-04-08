@@ -11,7 +11,7 @@ export async function resetTeamsForLevel(levelNumber: number) {
       team.totalLockedScore = Math.max(0, team.totalLockedScore - (levelState.lockedScore ?? 0));
     }
 
-    team.levelStates = team.levelStates.filter((entry) => entry.levelNumber !== levelNumber);
+    team.levelStates = team.levelStates.filter((entry) => entry.levelNumber !== levelNumber) as typeof team.levelStates;
     team.currentLevel = levelNumber;
     await team.save();
   }
@@ -25,7 +25,7 @@ export async function resetEntireContest() {
   for (const team of teams) {
     team.totalLockedScore = 0;
     team.currentLevel = 1;
-    team.levelStates = [];
+    team.levelStates.splice(0);
     await team.save();
   }
 
