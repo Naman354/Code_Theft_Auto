@@ -198,6 +198,7 @@ npm run dev
   "studentNumbers": ["2510001", "2510002"]
 }
 ```
+
 **Response:**
 ```json
 {
