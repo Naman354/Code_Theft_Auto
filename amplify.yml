@@ -6,6 +6,16 @@ frontend:
         - npm ci
     build:
       commands:
+        - echo "MONGO_URI=$MONGO_URI" >> .env
+        - echo "JWT_SECRET=$JWT_SECRET" >> .env
+        - echo "EMAIL_USER=$EMAIL_USER" >> .env
+        - echo "EMAIL_PASS=$EMAIL_PASS" >> .env
+        - echo "EMAIL_FROM=$EMAIL_FROM" >> .env
+        - echo "TEAM_SESSION_SECRET=$TEAM_SESSION_SECRET" >> .env
+        - echo "ADMIN_API_SECRET=$ADMIN_API_SECRET" >> .env
+        - echo "TEAM_MAX_MEMBER_COUNT=$TEAM_MAX_MEMBER_COUNT" >> .env
+        - echo "TEAM_MIN_PASSWORD_LENGTH=$TEAM_MIN_PASSWORD_LENGTH" >> .env
+        - echo "TEAM_MAX_TEAM_NAME_LENGTH=$TEAM_MAX_TEAM_NAME_LENGTH" >> .env
         - npm run build
   artifacts:
     baseDirectory: .next

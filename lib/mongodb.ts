@@ -22,7 +22,6 @@ export async function connectToDatabase() {
   const MONGO_URI = process.env.MONGO_URI;
   
   if (!MONGO_URI) {
-    console.log("Environment variables keys found:", Object.keys(process.env).filter(k => !k.includes("SECRET") && !k.includes("PASS") && !k.includes("URI")));
     throw new Error("MONGO_URI is not set in environment variables.");
   }
 
