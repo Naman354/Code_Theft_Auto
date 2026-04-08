@@ -25,7 +25,7 @@ export async function resetEntireContest() {
   for (const team of teams) {
     team.totalLockedScore = 0;
     team.currentLevel = 1;
-    team.levelStates = [];
+    team.levelStates.splice(0);
     await team.save();
   }
 
