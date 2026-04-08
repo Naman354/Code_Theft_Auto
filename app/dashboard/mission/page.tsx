@@ -39,17 +39,13 @@ function getLevelStatusLabel(status: ArenaLevelView["status"]) {
 }
 
 function getBlueprintLabel(level: ArenaLevelView) {
-  if (level.levelNumber === 5) {
-    return "SURPRISE BONUS";
-  }
-
   return `lvl ${level.levelNumber}: ${level.title.replace(/^LEVEL \d+ - /, "")}`;
 }
 
 function StarMeter({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-1">
-      {Array.from({ length: 5 }, (_, index) => (
+      {Array.from({ length: ARENA_LEVELS.length }, (_, index) => (
         <svg
           key={index}
           viewBox="0 0 24 24"
@@ -109,7 +105,7 @@ export default function MissionPage() {
   const timer = isSelectedLevelLive
     ? formatArenaTime(currentQuestionPayload.state.timer.timeRemainingSeconds)
     : selectedLevel.timeRemaining ?? selectedLevel.duration;
-  const wantedLevel = Math.max(1, Math.min(5, selectedLevel.levelNumber));
+  const wantedLevel = Math.max(1, Math.min(ARENA_LEVELS.length, selectedLevel.levelNumber));
 
   useEffect(() => {
     const token = getArenaToken();
@@ -464,7 +460,7 @@ export default function MissionPage() {
                           <div
                             className={[
                               "mt-1 font-chalet text-[0.88rem] uppercase tracking-[0.2em]",
-                              level.levelNumber === 5 ? "text-amber-300" : "text-zinc-100",
+                              "text-zinc-100",
                             ].join(" ")}
                           >
                             {getBlueprintLabel(level)}

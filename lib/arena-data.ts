@@ -72,20 +72,10 @@ export const ARENA_LEVELS: ArenaLevelDefinition[] = [
     reward: "Puzzle fragments restored",
     demoAnswer: "DECODE",
   },
-  {
-    levelNumber: 5,
-    title: "LEVEL 5 - FINAL SECURITY TEST",
-    difficulty: "Extreme",
-    duration: "15:00",
-    description: "Defeat the last defense and seal the arena.",
-    objective: "Clear the final gate and complete the mission.",
-    reward: "Arena control unlocked",
-    demoAnswer: "FINAL",
-  },
 ];
 
 export const DEFAULT_LEADERBOARD: ArenaLeaderboardEntry[] = [
-  { rank: 1, teamName: "NEON//ROOT", score: 6930, level: 5 },
+  { rank: 1, teamName: "NEON//ROOT", score: 6930, level: 4 },
   { rank: 2, teamName: "BYTE_RAZORS", score: 6420, level: 4 },
   { rank: 3, teamName: "ZERO_TRACE", score: 5980, level: 4 },
   { rank: 4, teamName: "CRYPTIC LAB", score: 5480, level: 3 },

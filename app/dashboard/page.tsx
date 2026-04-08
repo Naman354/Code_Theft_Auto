@@ -35,10 +35,6 @@ function getLevelStatusLabel(status: ArenaLevelView["status"]) {
 }
 
 function getBlueprintLabel(level: ArenaLevelView) {
-  if (level.levelNumber === 5) {
-    return "Surprise Bonus";
-  }
-
   return `lvl ${level.levelNumber}: ${level.title.replace(/^LEVEL \d+ - /, "")}`;
 }
 
@@ -61,7 +57,8 @@ export default function DashboardPage() {
   );
 
   const wantedStars = useMemo(() => {
-    return Array.from({ length: 5 }, (_, index) => index < Math.max(1, Math.min(5, activeLevel.levelNumber)));
+    const totalLevels = ARENA_LEVELS.length;
+    return Array.from({ length: totalLevels }, (_, index) => index < Math.max(1, Math.min(totalLevels, activeLevel.levelNumber)));
   }, [activeLevel.levelNumber]);
 
   useEffect(() => {
@@ -284,7 +281,7 @@ export default function DashboardPage() {
                       <div
                         className={[
                           "mt-1 font-chalet text-[0.9rem] uppercase tracking-[0.22em]",
-                          level.levelNumber === 5 ? "text-amber-300" : "text-zinc-100",
+                          "text-zinc-100",
                         ].join(" ")}
                       >
                         {getBlueprintLabel(level)}
