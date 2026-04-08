@@ -48,6 +48,7 @@ function calculateTimeDecay(elapsedSeconds: number, gracePeriodSeconds: number, 
   return Math.max(0, elapsedSeconds - gracePeriodSeconds) * decayPerSecond;
 }
 
+
 export function normalizeAnswer(value: string) {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
