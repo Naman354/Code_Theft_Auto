@@ -8,7 +8,6 @@ const AUDIO_UNLOCK_KEY = "gta-theme-audio-unlocked";
 
 export function GlobalAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const startedRef = useRef(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -18,30 +17,15 @@ export function GlobalAudio() {
       return;
     }
 
-    audio.volume = 0.1;
+    audio.volume = 0.45;
 
     const tryPlay = async () => {
       try {
         await audio.play();
-        startedRef.current = true;
         window.sessionStorage.setItem(AUDIO_UNLOCK_KEY, "true");
-        detachUnlockListeners();
       } catch {
         // Ignore autoplay failures when the browser requires user interaction.
       }
-    };
-
-    const unlockAudio = () => {
-      void tryPlay();
-    };
-
-    const detachUnlockListeners = () => {
-      window.removeEventListener("pointerdown", unlockAudio);
-      window.removeEventListener("click", unlockAudio);
-      window.removeEventListener("keydown", unlockAudio);
-      window.removeEventListener("touchstart", unlockAudio);
-      window.removeEventListener("focus", unlockAudio);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
 
     const handleVisibilityChange = () => {
@@ -50,17 +34,17 @@ export function GlobalAudio() {
       }
     };
 
-    void tryPlay();
+    const handleCanPlayThrough = () => {
+      void tryPlay();
+    };
 
-    window.addEventListener("pointerdown", unlockAudio, { passive: true });
-    window.addEventListener("click", unlockAudio, { passive: true });
-    window.addEventListener("keydown", unlockAudio);
-    window.addEventListener("touchstart", unlockAudio, { passive: true });
-    window.addEventListener("focus", unlockAudio);
+    void tryPlay();
+    audio.addEventListener("canplaythrough", handleCanPlayThrough);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      detachUnlockListeners();
+      audio.removeEventListener("canplaythrough", handleCanPlayThrough);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -82,7 +66,6 @@ export function GlobalAudio() {
       if (audio.paused) {
         try {
           await audio.play();
-          startedRef.current = true;
         } catch {
           // Ignore if the browser still refuses playback.
         }

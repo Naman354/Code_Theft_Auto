@@ -96,7 +96,25 @@ export default function Home() {
       }
     };
 
+    const restartVideo = () => {
+      video.currentTime = 0;
+      void tryPlay();
+    };
+
+    const resumeVideo = () => {
+      if (!video.ended) {
+        void tryPlay();
+      }
+    };
+
+    video.addEventListener("ended", restartVideo);
+    video.addEventListener("pause", resumeVideo);
     void tryPlay();
+
+    return () => {
+      video.removeEventListener("ended", restartVideo);
+      video.removeEventListener("pause", resumeVideo);
+    };
   }, []);
 
   async function handleLogin(teamName: string, password: string) {
@@ -168,6 +186,7 @@ export default function Home() {
           ref={landingVideoRef}
           className="h-full w-full object-cover opacity-30"
           autoPlay
+          loop
           muted
           playsInline
           preload="auto"
