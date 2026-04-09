@@ -241,6 +241,12 @@ export function buildCurrentQuestionState(params: {
       ? {
         levelNumber: level.levelNumber,
         question: level.question,
+        snippets: Array.isArray(level.snippets)
+          ? level.snippets.map((snippet) => ({
+              language: snippet.language,
+              code: snippet.code,
+            }))
+          : [],
         clue1: clue1Visible ? level.clue1 : null,
         clue2: clue2Visible ? level.clue2 : null,
       }

@@ -123,6 +123,10 @@ type CurrentQuestionResponse = {
   currentQuestion: {
     levelNumber: number;
     question: string;
+    snippets: Array<{
+      language: string;
+      code: string;
+    }>;
     clue1: string | null;
     clue2: string | null;
   } | null;

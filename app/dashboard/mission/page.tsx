@@ -47,6 +47,107 @@ function getBlueprintLabel(level: ArenaLevelView) {
   return `lvl ${level.levelNumber}: ${level.title.replace(/^LEVEL \d+ - /, "")}`;
 }
 
+type ScriptLanguage = "python" | "java" | "cpp" | "c";
+
+const LANGUAGE_LABELS: Record<ScriptLanguage, string> = {
+  python: "Python",
+  java: "Java",
+  cpp: "C++",
+  c: "C",
+};
+
+function normalizeLanguage(input: string | null | undefined): ScriptLanguage | null {
+  switch ((input ?? "").toLowerCase()) {
+    case "python":
+    case "py":
+      return "python";
+    case "java":
+      return "java";
+    case "cpp":
+    case "c++":
+      return "cpp";
+    case "c":
+      return "c";
+    default:
+      return null;
+  }
+}
+
+function buildFallbackSecurityScripts(questionText: string): Array<{ language: ScriptLanguage; code: string }> {
+  const missionText = questionText.trim() || "Decode the mission input and return the final answer.";
+
+  return [
+    {
+      language: "python",
+      code: [
+        "# encrypted access routine",
+        "mission = '''" + missionText + "'''",
+        "",
+        "def crack_access_code(data: str) -> str:",
+        "    # TODO: decode the pattern and return the final answer",
+        "    return \"\"",
+        "",
+        "print(crack_access_code(mission))",
+      ].join("\n"),
+    },
+    {
+      language: "java",
+      code: [
+        "// encrypted access routine",
+        "public class MissionHack {",
+        "    public static String crackAccessCode(String mission) {",
+        "        // TODO: decode the pattern and return the final answer",
+        "        return \"\";",
+        "    }",
+        "",
+        "    public static void main(String[] args) {",
+        `        String mission = "${missionText.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}";`,
+        "        System.out.println(crackAccessCode(mission));",
+        "    }",
+        "}",
+      ].join("\n"),
+    },
+    {
+      language: "cpp",
+      code: [
+        "// encrypted access routine",
+        "#include <iostream>",
+        "#include <string>",
+        "using namespace std;",
+        "",
+        "string crackAccessCode(const string& mission) {",
+        "    // TODO: decode the pattern and return the final answer",
+        '    return "";',
+        "}",
+        "",
+        "int main() {",
+        `    string mission = R"(${missionText})";`,
+        "    cout << crackAccessCode(mission) << endl;",
+        "    return 0;",
+        "}",
+      ].join("\n"),
+    },
+    {
+      language: "c",
+      code: [
+        "/* encrypted access routine */",
+        "#include <stdio.h>",
+        "",
+        "char* crack_access_code(const char* mission) {",
+        "    // TODO: decode the pattern and return the final answer",
+        '    return "";',
+        "}",
+        "",
+        "int main(void) {",
+        `    const char* mission = "${missionText.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}";`,
+        '    printf("%s\\n", crack_access_code(mission));',
+        "    return 0;",
+        "}",
+      ].join("\n"),
+    },
+  ];
+}
+
 function StarMeter({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-1">
@@ -103,6 +204,7 @@ export default function MissionPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [showSuccessPop, setShowSuccessPop] = useState(false);
   const [currentQuestionPayload, setCurrentQuestionPayload] = useState<CurrentQuestionPayload | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<ScriptLanguage>("python");
 
   const selectedLevel = useMemo(
     () => levels.find((level) => level.levelNumber === selectedLevelNumber) ?? levels[0],
@@ -321,6 +423,31 @@ export default function MissionPage() {
       : isSelectedLevelLive
       ? `Live score: ${currentQuestionPayload?.state.scoring.liveScore ?? 0}`
       : selectedLevel.objective;
+  const securityScripts = useMemo(() => {
+    const liveSnippets = isSelectedLevelLive ? activeQuestion?.snippets ?? [] : [];
+    const mappedSnippets = liveSnippets
+      .map((snippet) => {
+        const language = normalizeLanguage(snippet.language);
+
+        if (!language) {
+          return null;
+        }
+
+        return {
+          language,
+          code: snippet.code,
+        };
+      })
+      .filter((snippet): snippet is { language: ScriptLanguage; code: string } => Boolean(snippet));
+
+    if (mappedSnippets.length > 0) {
+      return mappedSnippets;
+    }
+
+    return buildFallbackSecurityScripts(selectedQuestionBody);
+  }, [activeQuestion?.snippets, isSelectedLevelLive, selectedQuestionBody]);
+  const activeSecurityScript =
+    securityScripts.find((snippet) => snippet.language === selectedLanguage) ?? securityScripts[0];
   const currentTimerState = currentQuestionPayload?.state.timer;
   const currentLevelState = currentQuestionPayload?.state.levelState;
   const currentScoringState = currentQuestionPayload?.state.scoring;
@@ -352,8 +479,14 @@ export default function MissionPage() {
         : currentLevelState?.status === "solved"
           ? "Answered"
           : currentLevelState?.status === "expired"
-          ? "Expired"
+            ? "Expired"
             : "Submit Answer";
+
+  useEffect(() => {
+    if (!securityScripts.some((snippet) => snippet.language === selectedLanguage)) {
+      setSelectedLanguage(securityScripts[0]?.language ?? "python");
+    }
+  }, [securityScripts, selectedLanguage]);
 
   if (loading) {
     return (
@@ -645,47 +778,156 @@ export default function MissionPage() {
 
               <Reveal delay={0.06}>
               <HoverPanel className="gta-panel relative min-h-[342px] overflow-hidden rounded-[2.25rem] bg-[#171717] shadow-[0_0_0_1px_rgba(255,255,255,0.03)]" glowClassName="bg-cyan-400/10">
-                <div className="absolute left-0 top-0 h-full w-[14px] bg-[#d8d8d8]" />
-                <div className="absolute left-0 top-0 h-[4px] w-full bg-[#18952d]" />
+                <div className="absolute left-0 top-0 h-full w-[12px] bg-[linear-gradient(180deg,#d9d9d9,#8d8d8d)]" />
+                <div className="absolute left-0 top-0 h-[4px] w-full bg-[linear-gradient(90deg,#18952d,#2dd4bf,#facc15)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_22%)]" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.12]" />
 
-                <div className="relative mx-auto mb-2 w-full max-w-fit rounded-[1.35rem] bg-[#252120] px-4 py-3 sm:mx-0 sm:ml-auto sm:w-fit sm:rounded-bl-[1.6rem] sm:rounded-tr-[0] sm:absolute sm:right-0 sm:top-0 sm:mb-0 sm:px-5 sm:py-4">
-                  <div className="font-pricedown text-[1.3rem] uppercase tracking-[0.08em] text-white sm:text-[1.7rem] lg:text-[2rem]">
-                    Wanted Level
+                <div className="relative grid gap-5 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-[minmax(0,1fr)_190px]">
+                  <div className="space-y-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="font-pricedown text-[1.2rem] uppercase tracking-[0.08em] text-white min-[420px]:text-[1.35rem] sm:text-[1.8rem] lg:text-[2.15rem]">
+                          Question-{selectedLevel.levelNumber}
+                        </div>
+                        <div className="mt-2 font-chalet text-[0.58rem] uppercase tracking-[0.34em] text-cyan-300/70 sm:text-[0.68rem]">
+                          Classified Heist Dossier
+                        </div>
+                      </div>
+
+                      <div className="w-fit rounded-[1.35rem] border border-amber-300/20 bg-[#252120] px-4 py-3 shadow-[0_12px_30px_rgba(0,0,0,0.3)]">
+                        <div className="font-pricedown text-[1.15rem] uppercase tracking-[0.08em] text-white sm:text-[1.45rem]">
+                          Wanted Level
+                        </div>
+                        <div className="mt-1 flex justify-start">
+                          <StarMeter value={wantedLevel} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div className="rounded-[1.7rem] border border-white/10 bg-black/35 px-4 py-4 sm:px-5">
+                        <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-zinc-500 sm:text-[0.64rem]">
+                          Name Of The Question
+                        </div>
+                        <div className="mt-3 font-pricedown text-[1.35rem] uppercase tracking-[0.08em] text-white sm:text-[1.8rem]">
+                          Question-{selectedLevel.levelNumber}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[1.7rem] border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(5,15,21,0.95),rgba(5,8,13,0.9))] px-4 py-4 sm:px-5">
+                        <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-cyan-300/70 sm:text-[0.64rem]">
+                          Mission Brief
+                        </div>
+                        <div className="mt-3 font-chalet text-[0.74rem] uppercase leading-6 tracking-[0.16em] text-zinc-200/90 min-[420px]:text-[0.8rem] sm:text-[0.92rem] sm:leading-7 sm:tracking-[0.22em] lg:text-[0.98rem] lg:leading-8">
+                          {selectedQuestionBody}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[1.7rem] border border-fuchsia-400/15 bg-[linear-gradient(180deg,rgba(17,8,20,0.96),rgba(7,10,17,0.92))] px-4 py-4 sm:px-5">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                          <div>
+                            <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-fuchsia-300/75 sm:text-[0.64rem]">
+                              Security Script
+                            </div>
+                            <div className="mt-2 font-chalet text-[0.6rem] uppercase tracking-[0.22em] text-zinc-500 sm:text-[0.66rem]">
+                              Encrypted pattern loaded. Pick a language and crack the vault.
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {securityScripts.map((snippet) => {
+                              const isActiveLanguage = snippet.language === activeSecurityScript?.language;
+
+                              return (
+                                <button
+                                  key={snippet.language}
+                                  type="button"
+                                  onClick={() => setSelectedLanguage(snippet.language)}
+                                  className={[
+                                    "rounded-full border px-3 py-2 font-chalet text-[0.62rem] uppercase tracking-[0.28em] transition",
+                                    isActiveLanguage
+                                      ? "border-fuchsia-300/50 bg-fuchsia-300/14 text-fuchsia-100 shadow-[0_0_18px_rgba(217,70,239,0.16)]"
+                                      : "border-white/10 bg-white/5 text-zinc-400 hover:border-fuchsia-300/25 hover:text-zinc-200",
+                                  ].join(" ")}
+                                >
+                                  {LANGUAGE_LABELS[snippet.language]}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 overflow-hidden rounded-[1.45rem] border border-white/10 bg-[#071019] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
+                          <div className="flex items-center justify-between gap-3 border-b border-white/8 bg-black/35 px-4 py-3">
+                            <div className="font-chalet text-[0.58rem] uppercase tracking-[0.34em] text-zinc-400">
+                              encrypted-pattern://mission-{selectedLevel.levelNumber}
+                            </div>
+                            <div className="font-chalet text-[0.58rem] uppercase tracking-[0.3em] text-cyan-300/70">
+                              {activeSecurityScript ? LANGUAGE_LABELS[activeSecurityScript.language] : "Script"}
+                            </div>
+                          </div>
+                          <pre className="overflow-x-auto px-4 py-4 font-mono text-[0.7rem] leading-6 text-cyan-100 sm:text-[0.8rem] sm:leading-7"><code>{activeSecurityScript?.code ?? "// secure script unavailable"}</code></pre>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="rounded-[1.7rem] border border-amber-400/12 bg-black/35 px-4 py-4 sm:px-5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-amber-300/75 sm:text-[0.64rem]">
+                              Clue 1
+                            </div>
+                            <div className="font-chalet text-[0.54rem] uppercase tracking-[0.28em] text-zinc-500">
+                              -{currentQuestionPayload?.state.scoring.clue1Penalty ?? "-"} pts
+                            </div>
+                          </div>
+                          <div className="mt-3 font-chalet text-[0.72rem] uppercase leading-6 tracking-[0.14em] text-zinc-200/90 sm:text-[0.82rem] sm:tracking-[0.18em]">
+                            {isSelectedLevelLive
+                              ? clueOne ?? `Locked. Reveals in ${formatArenaTime(countdownToClueOne)} while the timer is running.`
+                              : "Select the active level to view clue 1."}
+                          </div>
+                        </div>
+
+                        <div className="rounded-[1.7rem] border border-rose-400/12 bg-black/35 px-4 py-4 sm:px-5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-rose-300/75 sm:text-[0.64rem]">
+                              Clue 2
+                            </div>
+                            <div className="font-chalet text-[0.54rem] uppercase tracking-[0.28em] text-zinc-500">
+                              -{currentQuestionPayload?.state.scoring.clue2Penalty ?? "-"} pts
+                            </div>
+                          </div>
+                          <div className="mt-3 font-chalet text-[0.72rem] uppercase leading-6 tracking-[0.14em] text-zinc-200/90 sm:text-[0.82rem] sm:tracking-[0.18em]">
+                            {isSelectedLevelLive
+                              ? clueTwo ?? `Locked. Reveals in ${formatArenaTime(countdownToClueTwo)} while the timer is running.`
+                              : "Select the active level to view clue 2."}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="font-chalet text-[0.62rem] uppercase tracking-[0.22em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.28em]">
+                        Objective: {selectedObjective}
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-1 flex justify-center sm:justify-start">
-                    <StarMeter value={wantedLevel} />
-                  </div>
+
+                  <m.div
+                    className="pointer-events-none hidden lg:block"
+                    animate={reduceMotion ? undefined : { y: [0, -8, 0] }}
+                    transition={{ duration: 4.6, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Image
+                      src="/assets/images/character4.png"
+                      alt="Mission operator"
+                      width={180}
+                      height={180}
+                      className="h-auto w-[180px] object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)]"
+                    />
+                    <p className="mt-2 max-w-[180px] text-right font-chalet text-[0.58rem] uppercase leading-5 tracking-[0.35em] text-zinc-400">
+                      &quot;Read the pattern, choose the script, then make your move.&quot;
+                    </p>
+                  </m.div>
                 </div>
-
-                <div className="flex min-h-[342px] flex-col px-5 py-6 sm:px-8 sm:py-8 sm:pr-44">
-                  <div className="font-pricedown text-[1.2rem] uppercase tracking-[0.08em] text-white min-[420px]:text-[1.35rem] sm:text-[1.8rem] lg:text-[2.15rem]">
-                    Question-1
-                  </div>
-                  <div className="mt-4 max-w-3xl font-chalet text-[0.74rem] uppercase leading-5 tracking-[0.1em] text-zinc-200/90 min-[420px]:text-[0.8rem] sm:text-[0.95rem] sm:leading-7 sm:tracking-[0.18em] lg:text-[1rem] lg:leading-8 lg:tracking-[0.24em]">
-                    {selectedQuestionBody}
-                  </div>
-
-                  <div className="mt-6 sm:mt-auto max-w-3xl font-chalet text-[0.66rem] uppercase tracking-[0.14em] text-zinc-400 sm:text-[0.74rem] sm:tracking-[0.22em] lg:tracking-[0.3em]">
-                    Objective: {selectedObjective}
-                  </div>
-                </div>
-
-                <m.div
-                  className="pointer-events-none absolute right-2 top-10 hidden lg:block"
-                  animate={reduceMotion ? undefined : { y: [0, -8, 0] }}
-                  transition={{ duration: 4.6, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <Image
-                    src="/assets/images/character4.png"
-                    alt="Mission operator"
-                    width={180}
-                    height={180}
-                    className="h-auto w-[180px] object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)]"
-                  />
-                  <p className="mt-2 max-w-[180px] text-right font-chalet text-[0.58rem] uppercase leading-5 tracking-[0.35em] text-zinc-400">
-                    &quot;Start simple. Focus, and you will get the hang of it&quot;
-                  </p>
-                </m.div>
               </HoverPanel>
               </Reveal>
 
@@ -714,36 +956,25 @@ export default function MissionPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="border-l-4 border-white/90 pl-3">
                         <div className="font-pricedown text-[1.2rem] uppercase leading-none tracking-[0.08em] text-cyan-400 min-[420px]:text-[1.35rem] sm:text-[1.65rem] lg:text-[1.85rem]">
-                          Live Intel
+                          Mission Status
                         </div>
                       </div>
                     </div>
 
                     <div className="min-h-[170px] max-w-2xl font-chalet text-[0.72rem] uppercase leading-5 tracking-[0.1em] text-zinc-200 min-[420px]:text-[0.8rem] sm:text-[0.86rem] sm:leading-7 sm:tracking-[0.18em] lg:text-[0.9rem] lg:leading-8 lg:tracking-[0.24em]">
-                      {isSelectedLevelLive ? (
-                        <>
-                          <div>
-                            {clueOne ??
-                              `Clue 1 locked. Reveals in ${formatArenaTime(countdownToClueOne)} while the level timer is running.`}
-                          </div>
-                          <div className="mt-4 border-t border-white/10 pt-4">
-                            {clueTwo ??
-                              `Clue 2 locked. Reveals in ${formatArenaTime(countdownToClueTwo)} while the level timer is running.`}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div>Hints are only streamed for the current live level.</div>
-                          <div className="mt-4 border-t border-white/10 pt-4 text-[0.64rem] tracking-[0.16em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
-                            Select the active level to view admin-controlled clue releases.
-                          </div>
-                        </>
-                      )}
-                      <div className="mt-4 text-[0.64rem] tracking-[0.16em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
+                      <div>
+                        {isSelectedLevelLive
+                          ? "Primary dossier synchronized. Security scripts and clue channels are active inside the question box."
+                          : "Viewing archived blueprint data. Switch to the live level for the active mission dossier."}
+                      </div>
+                      <div className="mt-4 border-t border-white/10 pt-4 text-[0.64rem] tracking-[0.16em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
                         Penalties: {currentQuestionPayload?.state.scoring.clue1Penalty ?? "-"} / {currentQuestionPayload?.state.scoring.clue2Penalty ?? "-"}
                       </div>
                       <div className="mt-2 text-[0.64rem] tracking-[0.16em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
                         Status: {currentQuestionPayload?.state.contestStatus ?? "unknown"} / {currentLevelState?.status ?? "unknown"}
+                      </div>
+                      <div className="mt-2 text-[0.64rem] tracking-[0.16em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
+                        Live Score: {currentQuestionPayload?.state.scoring.liveScore ?? "-"}
                       </div>
                     </div>
                   </div>
@@ -768,12 +999,12 @@ export default function MissionPage() {
               </Reveal>
 
               {message ? (
-                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-5 py-4 font-pricedown text-[1.2rem] uppercase tracking-[0.08em] text-cyan-100 sm:text-[1.45rem]">
                   {message}
                 </div>
               ) : null}
               {error ? (
-                <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-5 py-4 font-pricedown text-[1.2rem] uppercase tracking-[0.08em] text-rose-200 sm:text-[1.45rem]">
                   {error}
                 </div>
               ) : null}
