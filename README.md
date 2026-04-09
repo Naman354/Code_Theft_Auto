@@ -1,6 +1,6 @@
 # Code Theft Auto 🚗💨
 
-A high-stakes, team-based coding competition platform built with **Next.js 16** and **MongoDB**. Teams compete to solve algorithmic challenges under time pressure, navigating through levels of increasing difficulty while managing "score decay" and strategic clue reveals.
+A high-stakes, team-based coding competition platform built with **Next.js 16** and **MongoDB**. Inspired by the high-octane aesthetic of the *Grand Theft Auto* series, teams compete to solve algorithmic challenges in a "cyber city" environment, navigating through levels of increasing difficulty while managing real-time score decay and strategic clue reveals.
 
 ---
 
@@ -9,8 +9,26 @@ A high-stakes, team-based coding competition platform built with **Next.js 16** 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
+- **Animations**: Framer Motion (System-wide reveals, staggers, and hover effects)
 - **Database**: MongoDB + Mongoose (uses a "Day 1" Registration database for student verification)
 - **Auth**: Iron Session (Team) & Secret Header (Admin)
+
+---
+
+## 🌆 Immersive Experience
+
+The latest update brings a complete visual overhaul designed to immerse players in the "Code Theft Auto" world:
+
+### 🎮 GTA-Inspired Interface
+- **Dynamic Loading Screens**: Specialized GTA-style character cards and progress bars during navigation.
+- **Cyberpunk Aesthetic**: Custom radial gradients, noise overlays, and scanline effects create a "dark city" atmosphere.
+- **Typography**: Heavily stylized fonts (Pricedown, Chalet, Forresten) for that authentic high-stakes feel.
+
+### ⚡ Interactive Elements
+- **Crew Roster**: A live view of your team members, stylized as a "Most Wanted" list with connection status.
+- **Mission Blueprint**: Clear visualization of level progression, mission status (Cleared/Active/Locked), and "Wanted Level" star meter.
+- **Live Intel Streams**: Strategic clues that reveal themselves automatically over time, accompanied by tactical penalties.
+- **Motion System**: Smooth, performant transitions using Framer Motion for every panel, button, and reveal.
 
 ---
 
@@ -122,26 +140,7 @@ npm run dev
 ```
 *(Optional: Omit `level` to start the next one)*
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Level 1 started successfully.",
-  "contestState": { "status": "running", "currentLevel": 1, "levelEndsAt": "..." }
-}
-```
-
-#### 3. `POST /api/admin/next-level`
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Level 2 started successfully.",
-  "contestState": { "status": "running", "currentLevel": 2, "levelEndsAt": "..." }
-}
-```
-
-#### 4. `POST /api/admin/seed-levels`
+#### 3. `POST /api/admin/seed-levels`
 **Request Body:**
 ```json
 {
@@ -179,18 +178,7 @@ npm run dev
 | `/api/team/submit-answer` | `POST` | Cookie |
 
 #### 1. `POST /api/team/signup`
-**Request Body (Option A - Object List):**
-```json
-{
-  "teamName": "TeamAlpha",
-  "password": "securePass123",
-  "members": [
-    { "studentNumber": "2510001" },
-    { "studentNumber": "2510002" }
-  ]
-}
-```
-**Request Body (Option B - String List):**
+**Request Body:**
 ```json
 {
   "teamName": "TeamAlpha",
@@ -199,35 +187,7 @@ npm run dev
 }
 ```
 
-
-**Response:**
-```json
-{
-  "success": true,
-  "team": { "id": "...", "teamName": "TeamAlpha", "teamNumber": 12 }
-}
-```
-
-#### 2. `POST /api/team/login`
-**Request Body:**
-```json
-{ "teamName": "TeamAlpha", "password": "securePass123" }
-```
-**Response:**
-```json
-{
-  "success": true,
-  "team": { "id": "...", "teamName": "TeamAlpha", "teamNumber": 12 }
-}
-```
-
-#### 3. `POST /api/team/logout`
-**Response:**
-```json
-{ "success": true }
-```
-
-#### 4. `GET /api/team/state`
+#### 2. `GET /api/team/state`
 **Response:**
 ```json
 {
@@ -241,36 +201,6 @@ npm run dev
     "timer": { "levelEndsAt": "...", "timeRemainingSeconds": 420 },
     "scoring": { "liveScore": 850, "timeDecay": 50, "cluePenaltyTotal": 0 }
   }
-}
-```
-
-#### 5. `GET /api/team/current-question`
-**Response:**
-```json
-{
-  "success": true,
-  "currentQuestion": {
-    "levelNumber": 1,
-    "question": "Reverse a linked list...",
-    "clue1": "Use three pointers...",
-    "clue2": null 
-  },
-  "state": { "contestStatus": "running", "scoring": { "liveScore": 850 } }
-}
-```
-
-#### 6. `POST /api/team/submit-answer`
-**Request Body:**
-```json
-{ "answer": "Paris" }
-```
-**Response (Correct):**
-```json
-{
-  "success": true,
-  "isCorrect": true,
-  "lockedScore": 850,
-  "state": { "nextLevel": 2, "totalLockedScore": 5350 }
 }
 ```
 
