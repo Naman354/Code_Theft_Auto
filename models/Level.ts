@@ -5,6 +5,12 @@ const levelSchema = new Schema(
     levelNumber: { type: Number, required: true, unique: true },
     question: { type: String, required: true, trim: true },
     answer: { type: String, required: true, trim: true },
+    snippets: [
+  {
+    language: { type: String, required: true }, // 'python', 'java', 'cpp', 'c'
+    code: { type: String, required: true }
+  }
+],
     clue1: { type: String, default: null },
     clue2: { type: String, default: null },
     maxPoints: { type: Number, required: true, default: 1400, min: 0 },
