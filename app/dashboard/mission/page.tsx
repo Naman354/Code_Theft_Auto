@@ -676,8 +676,8 @@ export default function MissionPage() {
                             {row.studentId}
                           </div>
                         </div>
-                        <div className="ml-auto bg-emerald-950 px-3 py-1 text-[0.56rem] uppercase tracking-[0.18em] text-emerald-400 min-[420px]:text-[0.62rem] min-[420px]:tracking-[0.22em]">
-                          Connected
+                        <div className="ml-auto max-w-[110px] truncate rounded-full bg-emerald-950 px-3 py-1 font-chalet text-[0.56rem] uppercase tracking-[0.14em] text-emerald-300 min-[420px]:max-w-[130px] min-[420px]:text-[0.62rem] min-[420px]:tracking-[0.18em]">
+                          {row.name}
                         </div>
                       </div>
                     </RevealItem>
@@ -806,20 +806,12 @@ export default function MissionPage() {
                     </div>
 
                     <div className="grid gap-4">
-                      <div className="rounded-[1.7rem] border border-white/10 bg-black/35 px-4 py-4 sm:px-5">
-                        <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-zinc-500 sm:text-[0.64rem]">
-                          Name Of The Question
-                        </div>
-                        <div className="mt-3 font-pricedown text-[1.35rem] uppercase tracking-[0.08em] text-white sm:text-[1.8rem]">
-                          Question-{selectedLevel.levelNumber}
-                        </div>
-                      </div>
 
                       <div className="rounded-[1.7rem] border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(5,15,21,0.95),rgba(5,8,13,0.9))] px-4 py-4 sm:px-5">
                         <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-cyan-300/70 sm:text-[0.64rem]">
                           Mission Brief
                         </div>
-                        <div className="mt-3 font-chalet text-[0.74rem] uppercase leading-6 tracking-[0.16em] text-zinc-200/90 min-[420px]:text-[0.8rem] sm:text-[0.92rem] sm:leading-7 sm:tracking-[0.22em] lg:text-[0.98rem] lg:leading-8">
+                        <div className="mt-3 whitespace-pre-line font-chalet text-[0.74rem] uppercase leading-6 tracking-[0.16em] text-zinc-200/90 min-[420px]:text-[0.8rem] sm:text-[0.92rem] sm:leading-7 sm:tracking-[0.22em] lg:text-[0.98rem] lg:leading-8">
                           {selectedQuestionBody}
                         </div>
                       </div>
@@ -934,7 +926,7 @@ export default function MissionPage() {
               <Reveal delay={0.08}>
               <section className="gta-panel min-h-[94px] rounded-[1.75rem] bg-[#171717] px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] sm:px-5">
                 <div className="font-pricedown text-[1.25rem] uppercase leading-none tracking-[0.08em] text-white min-[420px]:text-[1.4rem] sm:text-[1.75rem] lg:text-[1.95rem]">
-                  Answer -1
+                  Answer :-
                 </div>
                 <div className="mt-5 border-b border-white/12 pb-2">
                   <input

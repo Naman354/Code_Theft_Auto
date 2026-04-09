@@ -250,17 +250,14 @@ export default function DashboardPage() {
                           <path d="M12 12.2a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2.3c-4.2 0-8 2.4-8 5.6V22h16v-1.9c0-3.2-3.8-5.6-8-5.6Z" />
                         </svg>
                       </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate font-chalet text-[0.88rem] uppercase tracking-[0.2em] text-zinc-100">
+                        <div className="min-w-0 flex-1 pr-2">
+                          <div className="truncate font-chalet text-[0.95rem] uppercase tracking-[0.14em] text-zinc-100">
                           {member.name}
                           </div>
                           <div className="font-chalet text-[0.72rem] uppercase tracking-[0.28em] text-zinc-400">
                           {member.studentNumber}
                           </div>
                         </div>
-                      <div className="bg-emerald-950 px-3 py-1 text-[0.62rem] uppercase tracking-[0.18em] text-emerald-400 sm:tracking-[0.22em]">
-                        Connected
-                      </div>
                     </div>
                   </RevealItem>
                 ))}

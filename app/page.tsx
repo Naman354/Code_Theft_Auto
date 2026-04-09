@@ -9,6 +9,10 @@ import { AccessForm } from "@/components/AccessForm";
 import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
 import { fetchRegisteredTeamNames, loginArena, setArenaTeamSnapshot, signupArenaTeam } from "@/services/arena-api";
 import character5  from "@/public/assets/images/character5.png";
+
+const MAX_STUDENT_SLOTS = 5;
+const DEFAULT_STUDENT_SLOT_COUNT = 3;
+
 const navItems = [
   { label: "Mission", href: "#mission" },
   { label: "Leaderboard", href: "#leaderboard" },
@@ -24,36 +28,11 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [registerTeamName, setRegisterTeamName] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-  const [registerStudents, setRegisterStudents] = useState("");
+  const [studentSlotCount, setStudentSlotCount] = useState(DEFAULT_STUDENT_SLOT_COUNT);
+  const [registerStudents, setRegisterStudents] = useState<string[]>(
+    Array.from({ length: MAX_STUDENT_SLOTS }, () => ""),
+  );
   const [registeredTeams, setRegisteredTeams] = useState<Array<{ id: string; teamName: string; memberCount: number }>>([]);
-  const didLogHydrationRef = useRef(false);
-
-  useEffect(() => {
-    if (didLogHydrationRef.current) {
-      return;
-    }
-
-    didLogHydrationRef.current = true;
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[registerStudents][mount]", {
-        value: JSON.stringify(registerStudents),
-        length: registerStudents.length,
-        isEmpty: registerStudents === "",
-        isWhitespaceOnly: registerStudents.trim().length === 0,
-      });
-    }
-  }, [registerStudents]);
-
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[registerStudents][change]", {
-        value: JSON.stringify(registerStudents),
-        length: registerStudents.length,
-        isEmpty: registerStudents === "",
-        isWhitespaceOnly: registerStudents.trim().length === 0,
-      });
-    }
-  }, [registerStudents]);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,7 +123,6 @@ export default function Home() {
       const studentNumbers = Array.from(
         new Set(
           registerStudents
-            .split(/[\s,]+/)
             .map((value) => value.trim())
             .filter(Boolean),
         ),
@@ -177,6 +155,12 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleStudentNumberChange(index: number, value: string) {
+    setRegisterStudents((current) =>
+      current.map((studentNumber, currentIndex) => (currentIndex === index ? value : studentNumber)),
+    );
   }
 
   return (
@@ -417,20 +401,53 @@ export default function Home() {
                         </label>
 
                         <label className="grid gap-2">
-                          <span className="text-xs uppercase tracking-[0.35em] text-zinc-400">
-                            STUDENT NUMBERS (space/comma/newline separated)
-                          </span>
-                          <textarea
-                            value={registerStudents}
-                            onChange={(event) => setRegisterStudents(event.target.value)}
-                            className="relative z-10 min-h-28 rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 font-body text-white outline-none transition placeholder:font-body placeholder:text-zinc-300 placeholder:opacity-100 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20 focus:shadow-[0_0_22px_rgba(138,255,97,0.14)]"
-                            placeholder="e.g. 2510084, 2510085, 2510086"
-                          />
+                          <span className="font-chalet text-xs uppercase tracking-[0.35em] text-zinc-400">TEAM SIZE</span>
+                          <div className="rounded-[1.7rem] border border-lime-400/20 bg-zinc-950/90 p-4">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="font-chalet text-[10px] uppercase tracking-[0.32em] text-lime-300/70">
+                                  Select Crew Members
+                                </p>
+                                <p className="mt-1 font-chalet text-xs uppercase tracking-[0.2em] text-zinc-500">
+                                  Up to {MAX_STUDENT_SLOTS} student numbers
+                                </p>
+                              </div>
+
+                              <select
+                                value={studentSlotCount}
+                                onChange={(event) => setStudentSlotCount(Number(event.target.value))}
+                                className="font-chalet rounded-full border border-lime-300/25 bg-black px-4 py-3 text-sm uppercase tracking-[0.18em] text-lime-100 outline-none transition focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20"
+                              >
+                                {Array.from({ length: MAX_STUDENT_SLOTS }, (_, index) => index + 1).map((count) => (
+                                  <option key={count} value={count}>
+                                    {count} Member{count > 1 ? "s" : ""}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="mt-4 grid gap-3">
+                              {Array.from({ length: studentSlotCount }, (_, index) => (
+                                <label key={index} className="grid gap-2">
+                                  <span className="font-chalet text-[10px] uppercase tracking-[0.32em] text-zinc-500">
+                                    Student Number {index + 1}
+                                  </span>
+                                  <input
+                                    value={registerStudents[index] ?? ""}
+                                    onChange={(event) => handleStudentNumberChange(index, event.target.value)}
+                                    inputMode="numeric"
+                                    className="font-chalet rounded-2xl border border-lime-400/20 bg-black/75 px-4 py-3 text-base tracking-[0.08em] text-zinc-100 outline-none transition placeholder:tracking-[0.06em] placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20 focus:shadow-[0_0_22px_rgba(138,255,97,0.14)]"
+                                    placeholder={`e.g. 25100${84 + index}`}
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                          </div>
                         </label>
                       </div>
 
                       {error ? (
-                        <p className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                        <p className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 font-chalet text-sm tracking-[0.08em] text-rose-200">
                           {error}
                         </p>
                       ) : null}
