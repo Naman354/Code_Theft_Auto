@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { GlobalAudio } from "@/components/ui/global-audio";
 import { SiteEffects } from "@/components/ui/site-effects";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
@@ -39,6 +40,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-fuchsia-400/40">
         <ToastProvider>
+          <GlobalAudio />
           <SiteEffects />
           {children}
         </ToastProvider>

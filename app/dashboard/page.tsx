@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { GtaLoadingScreen } from "@/components/ui/gta-loading-screen";
 import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
 import { ARENA_LEVELS, type ArenaLevelView } from "@/lib/arena-data";
 import {
@@ -152,6 +153,16 @@ export default function DashboardPage() {
       }
       router.push("/");
     }
+  }
+
+  if (loading) {
+    return (
+      <GtaLoadingScreen
+        eyebrow="Connecting To Arena Grid"
+        title="Crew Dashboard"
+        subtitle="Tuning the scanner, syncing wanted status, and pulling your crew records out of the city noise."
+      />
+    );
   }
 
   return (

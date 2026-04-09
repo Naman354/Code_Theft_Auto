@@ -5,6 +5,7 @@ import { m, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { GtaLoadingScreen } from "@/components/ui/gta-loading-screen";
 import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
 import { useToast } from "@/components/ui/toast-provider";
 import { ARENA_LEVELS, formatArenaTime, type ArenaLevelView } from "@/lib/arena-data";
@@ -351,8 +352,18 @@ export default function MissionPage() {
         : currentLevelState?.status === "solved"
           ? "Answered"
           : currentLevelState?.status === "expired"
-            ? "Expired"
+          ? "Expired"
             : "Submit Answer";
+
+  if (loading) {
+    return (
+      <GtaLoadingScreen
+        eyebrow="Building Mission Brief"
+        title="Level Intake"
+        subtitle="Unpacking the file, warming the intel feed, and checking whether the cops already know your name."
+      />
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
