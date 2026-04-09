@@ -24,9 +24,8 @@ jobs:
           timeout: 60s
           command_timeout: 20m
           script: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            cd ~/cta-app
+            source /home/ubuntu/.nvm/nvm.sh
+            cd /home/ubuntu/cta-app
             git pull origin master
             npm install
             npm run build
