@@ -1,5 +1,6 @@
 "use client";
 
+import { m, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 
 type AccessFormProps = {
@@ -31,10 +32,14 @@ export function AccessForm({
 }: AccessFormProps) {
   const [primaryValue, setPrimaryValue] = useState("");
   const [secondaryValue, setSecondaryValue] = useState("");
+  const reduceMotion = useReducedMotion();
 
   return (
-    <form
-      className="rounded-[2rem] border border-lime-400/20 bg-black/70 p-6 shadow-[0_0_40px_rgba(0,255,140,0.14)] backdrop-blur-xl sm:p-8"
+    <m.form
+      className="gta-panel gta-glow rounded-[2rem] border border-lime-400/20 bg-black/70 p-6 backdrop-blur-xl sm:p-8"
+      initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+      animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
       onSubmit={async (event) => {
         event.preventDefault();
         await onSubmit(primaryValue, secondaryValue);
@@ -45,7 +50,7 @@ export function AccessForm({
           {eyebrow}
         </p>
         {title ? (
-          <h2 className="font-[family-name:var(--font-body)] text-2xl tracking-[0.08em] text-lime-300 sm:text-4xl">
+          <h2 className="gta-title text-2xl tracking-[0.08em] text-lime-300 sm:text-4xl">
             {title}
           </h2>
         ) : null}
@@ -57,7 +62,7 @@ export function AccessForm({
           <input
             value={primaryValue}
             onChange={(event) => setPrimaryValue(event.target.value)}
-            className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20"
+            className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20 focus:shadow-[0_0_20px_rgba(138,255,97,0.14)]"
             placeholder={primaryPlaceholder}
             autoComplete="username"
           />
@@ -68,7 +73,7 @@ export function AccessForm({
             value={secondaryValue}
             onChange={(event) => setSecondaryValue(event.target.value)}
             type="password"
-            className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20"
+            className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20 focus:shadow-[0_0_20px_rgba(138,255,97,0.14)]"
             placeholder={secondaryPlaceholder}
             autoComplete="current-password"
           />
@@ -81,13 +86,15 @@ export function AccessForm({
         </p>
       ) : null}
 
-      <button
+      <m.button
         type="submit"
         disabled={loading}
-        className="mt-6 w-full rounded-full border border-lime-300/60 bg-lime-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60 sm:tracking-[0.35em]"
+        className="gta-button gta-glitch mt-6 w-full rounded-full border border-lime-300/60 bg-lime-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60 sm:tracking-[0.35em]"
+        whileHover={reduceMotion ? undefined : { scale: 1.01 }}
+        whileTap={reduceMotion ? undefined : { scale: 0.985 }}
       >
         {loading ? statusLabel : submitLabel}
-      </button>
-    </form>
+      </m.button>
+    </m.form>
   );
 }

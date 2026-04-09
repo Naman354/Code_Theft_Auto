@@ -1,9 +1,11 @@
 "use client";
 
+import { m, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
 import { ARENA_LEVELS, type ArenaLevelView } from "@/lib/arena-data";
 import {
   fetchArenaLevels,
@@ -40,6 +42,7 @@ function getBlueprintLabel(level: ArenaLevelView) {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
   const [teamName, setTeamName] = useState("SYSTEM OPERATOR");
   const [teamMembers, setTeamMembers] = useState<Array<{ name: string; studentNumber: string }>>([]);
   const [levels, setLevels] = useState<ArenaLevelView[]>(getFallbackLevels());
@@ -160,12 +163,18 @@ export default function DashboardPage() {
         />
       </div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,79,79,0.14),transparent_28%),radial-gradient(circle_at_75%_18%,rgba(34,211,238,0.14),transparent_18%),linear-gradient(180deg,rgba(0,0,0,0.45),rgba(0,0,0,0.95))]" />
+      <div className="noise-overlay absolute inset-0 opacity-[0.1]" />
 
       <div className="relative z-10 flex min-h-screen flex-col px-3 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4 lg:px-6">
-        <header className="flex flex-col items-start justify-between gap-4 md:flex-row">
+        <m.header
+          className="flex flex-col items-start justify-between gap-4 md:flex-row"
+          initial={reduceMotion ? false : { opacity: 0, y: -16 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
           <div className="space-y-3">
-            <div className="font-pricedown text-[1.65rem] uppercase leading-none tracking-[0.08em] text-fuchsia-500 drop-shadow-[0_0_14px_rgba(217,70,239,0.45)] sm:text-[2.7rem] sm:tracking-[0.12em]">
-              CODE THEFT ARENA
+            <div className="gta-title gta-glitch text-[1.65rem] leading-none text-fuchsia-500 drop-shadow-[0_0_14px_rgba(217,70,239,0.45)] sm:text-[2.7rem]">
+              CODE THEFT AUTO
             </div>
             <div className="font-chalet text-[0.68rem] uppercase tracking-[0.28em] text-zinc-300/80 sm:text-[0.85rem] sm:tracking-[0.42em]">
               Secure connection established
@@ -178,25 +187,28 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex w-full flex-row items-start justify-between gap-3 md:w-auto md:flex-col md:items-end md:justify-start">
-            <button
+          <div className="flex w-full flex-col items-end gap-3 md:w-auto">
+            <m.button
               type="button"
               onClick={handleLogout}
-              className="rounded-full border border-rose-400/50 bg-rose-500/10 px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-rose-100 transition-all duration-300 hover:bg-rose-500/20 sm:tracking-[0.28em]"
+              className="gta-button self-end rounded-full border border-rose-400/50 bg-rose-500/10 px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-rose-100 transition-all duration-300 hover:bg-rose-500/20 sm:tracking-[0.28em]"
+              whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+              whileTap={reduceMotion ? undefined : { scale: 0.98 }}
             >
               Logout
-            </button>
-            <div className="rounded-[1.6rem] border-4 border-cyan-400 bg-black px-4 py-2 text-right shadow-[0_0_24px_rgba(34,211,238,0.15)] sm:px-5 sm:py-3">
+            </m.button>
+            <div className="gta-panel gta-glow w-full max-w-[260px] rounded-[1.8rem] border-4 border-cyan-400 bg-black px-4 py-2 text-right sm:px-5 sm:py-3 md:w-auto md:min-w-[230px]">
               <div className="font-pricedown text-[2.1rem] leading-none tracking-[0.08em] text-white sm:text-[4rem]">
                 {timer}
               </div>
             </div>
           </div>
-        </header>
+        </m.header>
 
         <main className="mt-4 grid flex-1 gap-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:gap-6">
           <aside className="space-y-5">
-            <section className="overflow-hidden border-t-[6px] border-t-red-500 bg-[#151515] pb-4">
+            <Reveal>
+            <section className="gta-panel overflow-hidden rounded-[2rem] border-t-[6px] border-t-red-500 bg-[#151515] pb-4">
               <div className="flex items-center gap-3 px-3 py-4 sm:px-4">
                 <div className="flex h-6 w-6 items-center justify-center text-red-400">
                   <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current" aria-hidden="true">
@@ -209,13 +221,13 @@ export default function DashboardPage() {
                 </h2>
               </div>
 
-              <div className="space-y-3 px-3">
+              <Stagger className="space-y-3 px-3">
                 {(teamMembers.length
                   ? teamMembers
                   : [{ name: teamName, studentNumber: "N/A" }]).map((member, index) => (
-                  <div
+                  <RevealItem
                     key={`${member.studentNumber}-${index}`}
-                    className="flex items-stretch overflow-hidden bg-[#242424] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
+                    className="flex items-stretch overflow-hidden rounded-[1.35rem] bg-[#242424] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
                   >
                     <div className="flex w-full flex-wrap items-center gap-2 border-l-2 border-red-500 px-2 py-2 sm:flex-nowrap">
                       <div className="flex h-7 w-7 items-center justify-center border border-white/70 bg-[#1a1a1a] text-white">
@@ -235,21 +247,23 @@ export default function DashboardPage() {
                         Connected
                       </div>
                     </div>
-                  </div>
+                  </RevealItem>
                 ))}
-              </div>
+              </Stagger>
             </section>
+            </Reveal>
 
-            <section className="overflow-hidden border-t-[6px] border-t-red-500 bg-[#151515] pb-4">
+            <Reveal delay={0.08}>
+            <section className="gta-panel overflow-hidden rounded-[2rem] border-t-[6px] border-t-red-500 bg-[#151515] pb-4">
               <div className="px-4 py-4">
                 <h2 className="font-pricedown text-2xl uppercase tracking-[0.08em] text-white">
                   Mission Blueprint
                 </h2>
               </div>
 
-              <div className="space-y-4 px-4">
+              <Stagger className="space-y-4 px-4">
                 {levels.map((level) => (
-                  <div key={level.levelNumber} className="flex items-start gap-3">
+                  <RevealItem key={level.levelNumber} className="flex items-start gap-3">
                     <div
                       className={[
                         "mt-1 flex h-7 w-7 items-center justify-center rounded-full border",
@@ -287,18 +301,20 @@ export default function DashboardPage() {
                         {getBlueprintLabel(level)}
                       </div>
                     </div>
-                  </div>
+                  </RevealItem>
                 ))}
-              </div>
+              </Stagger>
             </section>
+            </Reveal>
           </aside>
 
-          <section className="relative min-h-[560px] overflow-hidden border-t-[6px] border-t-red-500 bg-[#171717] px-4 py-6 sm:min-h-[620px] sm:px-8 sm:py-10">
-            <div className="relative mb-8 ml-auto w-fit rounded-bl-[1.8rem] bg-[#252120] px-4 py-4 sm:absolute sm:mb-0 sm:right-0 sm:top-0 sm:px-5 sm:py-5">
-              <div className="font-pricedown text-2xl uppercase tracking-[0.08em] text-white sm:text-[2.3rem]">
-                Wanted Level
+          <Reveal delay={0.12}>
+          <HoverPanel className="gta-panel relative min-h-[560px] overflow-hidden rounded-[2.25rem] border-t-[6px] border-t-red-500 bg-[#171717] px-4 py-6 sm:min-h-[620px] sm:px-8 sm:py-10" glowClassName="bg-cyan-400/10">
+            <div className="relative mb-8 ml-auto flex w-full items-center gap-5 rounded-[1.8rem] border border-white/8 bg-[linear-gradient(180deg,rgba(50,42,42,0.98),rgba(29,24,24,0.95))] px-5 py-5 shadow-[0_18px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur sm:absolute sm:right-5 sm:top-5 sm:mb-0 sm:w-auto sm:min-w-[260px]">
+              <div className="font-pricedown text-2xl uppercase tracking-[0.08em] text-white sm:text-[2.3rem] ">
+                Wanted 
               </div>
-              <div className="mt-1 flex items-center gap-1 text-2xl sm:text-[2rem]">
+              <div className="mt-3 inline-flex items-center gap-1 rounded-2xl border border-white/8 bg-black/25 px-3 py-2 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:text-[2rem]">
                 {wantedStars.map((filled, index) => (
                   <span key={index} className={filled ? "text-amber-400" : "text-black/75"}>
                     {"\u2605"}
@@ -308,22 +324,28 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex min-h-[460px] flex-col items-center justify-center text-center sm:min-h-[520px]">
-              <div className="text-red-500">
+              <m.div
+                className="text-red-500"
+                animate={reduceMotion ? undefined : { scale: [1, 1.05, 1] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+              >
                 <svg viewBox="0 0 24 24" className="mx-auto h-24 w-24 fill-current sm:h-28 sm:w-28" aria-hidden="true">
                   <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Zm3 4a2 2 0 0 1 1 3.75V19h-2v-1.25A2 2 0 0 1 12 14Z" />
                 </svg>
-              </div>
+              </m.div>
 
-              <h1 className="mt-6 max-w-4xl font-pricedown text-[1.9rem] uppercase leading-none tracking-[0.08em] text-[#0d9f24] sm:mt-8 sm:text-[3.5rem] sm:tracking-[0.12em] lg:text-[4.7rem]">
+              <h1 className="gta-title mt-6 max-w-4xl text-[1.9rem] leading-none text-[#0d9f24] sm:mt-8 sm:text-[3.5rem] lg:text-[4.7rem]">
                 {activeLevel.title}
               </h1>
 
+              <m.div whileHover={reduceMotion ? undefined : { scale: 1.02 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }}>
               <Link
                 href="/dashboard/mission"
-                className="mt-8 inline-flex items-center justify-center rounded-[0.6rem] bg-[#fbbf24] px-6 py-3 font-pricedown text-3xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 sm:mt-10 sm:py-4 sm:text-4xl"
+                className="gta-button gta-glitch mt-8 inline-flex items-center justify-center rounded-[0.6rem] bg-[#fbbf24] px-6 py-3 font-pricedown text-3xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 sm:mt-10 sm:py-4 sm:text-4xl"
               >
                 Unlock
               </Link>
+              </m.div>
 
               <p className="mt-8 max-w-3xl font-chalet text-[0.86rem] uppercase tracking-[0.14em] text-zinc-100 sm:mt-12 sm:text-[1.15rem] sm:tracking-[0.24em]">
                 {"\"You just pinged the system. Now let's see if you can break it.\""}
@@ -331,7 +353,11 @@ export default function DashboardPage() {
             </div>
 
             <div className="absolute bottom-2 right-2 hidden sm:block">
-              <div className="relative h-[190px] w-[145px] overflow-hidden border border-white/10 bg-black/40 shadow-[0_0_24px_rgba(0,0,0,0.45)]">
+              <m.div
+                className="relative h-[190px] w-[145px] overflow-hidden rounded-[1.4rem] border border-white/10 bg-black/40 shadow-[0_0_24px_rgba(0,0,0,0.45)]"
+                animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
+                transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
+              >
                 <Image
                   src="/assets/images/map.png"
                   alt="Arena map"
@@ -339,9 +365,10 @@ export default function DashboardPage() {
                   sizes="145px"
                   className="object-cover"
                 />
-              </div>
+              </m.div>
             </div>
-          </section>
+          </HoverPanel>
+          </Reveal>
         </main>
 
         <div className="mt-3 flex items-center justify-between gap-3">
@@ -355,4 +382,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

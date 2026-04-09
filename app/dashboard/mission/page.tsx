@@ -1,8 +1,10 @@
 "use client";
 
+import { m, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
 import { ARENA_LEVELS, formatArenaTime, type ArenaLevelView } from "@/lib/arena-data";
 import {
   fetchCurrentQuestion,
@@ -84,6 +86,7 @@ function DecorativeButton({
 export default function MissionPage() {
   type CurrentQuestionPayload = Awaited<ReturnType<typeof fetchCurrentQuestion>>;
 
+  const reduceMotion = useReducedMotion();
   const [teamName, setTeamName] = useState("VANSHIKA");
   const [teamMembers, setTeamMembers] = useState<Array<{ name: string; studentNumber: string }>>([]);
   const [score, setScore] = useState(0);
@@ -303,60 +306,66 @@ export default function MissionPage() {
         />
       </div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,79,79,0.18),transparent_20%),radial-gradient(circle_at_75%_18%,rgba(34,211,238,0.14),transparent_18%),linear-gradient(180deg,rgba(0,0,0,0.36),rgba(0,0,0,0.95))]" />
+      <div className="noise-overlay absolute inset-0 opacity-[0.1]" />
       <div className="relative z-10 min-h-screen px-3 pb-4 pt-2 sm:px-4 lg:px-5">
         <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-4">
-          <header className="flex flex-col gap-4 xl:grid xl:grid-cols-[auto_1fr_auto] xl:items-start">
-            <Link href="/dashboard" aria-label="Back to dashboard" className="pt-1">
-              <DecorativeButton className="h-[54px] w-[54px] rounded-[1.1rem] text-slate-900 sm:h-[64px] sm:w-[64px]">
+          <m.header
+            className="grid gap-4 sm:gap-5 xl:grid-cols-[auto_minmax(0,1fr)_auto] xl:items-center"
+            initial={reduceMotion ? false : { opacity: 0, y: -16 }}
+            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+          >
+            <Link href="/dashboard" aria-label="Back to dashboard" className="justify-self-start pt-1">
+              <m.div whileHover={reduceMotion ? undefined : { scale: 1.04 }} whileTap={reduceMotion ? undefined : { scale: 0.97 }}>
+              <DecorativeButton className="gta-button h-[58px] w-[58px] rounded-[1.25rem] text-slate-900 sm:h-[64px] sm:w-[64px]">
                 <svg viewBox="0 0 24 24" className="h-7 w-7 stroke-current" fill="none" aria-hidden="true">
                   <path d="M4 5h6v14H4zM14 5h6v14h-6z" strokeWidth="1.6" />
                 </svg>
               </DecorativeButton>
+              </m.div>
             </Link>
 
-            <div className="pt-3 space-y-3">
-              <div className="font-pricedown text-[1.65rem] uppercase leading-none tracking-[0.08em] text-fuchsia-500 drop-shadow-[0_0_12px_rgba(217,70,239,0.55)] sm:text-[2.7rem] sm:tracking-[0.1em]">
+            <div className="min-w-0 pt-1 text-center sm:pt-3 space-y-3 xl:px-6 flex items-center justify-center gap-2">
+              <div className="gta-title gta-glitch text-[1.2rem] leading-none text-fuchsia-500 drop-shadow-[0_0_12px_rgba(217,70,239,0.55)] min-[420px]:text-[1.45rem] sm:text-[2.1rem] lg:text-[2.7rem]">
                 CODE THEFT ARENA
               </div>
-              <div className="mt-2 font-chalet text-[0.68rem] uppercase tracking-[0.28em] text-zinc-300/80 sm:text-[0.82rem] sm:tracking-[0.42em]">
+              <div className="hidden md:block mt-2 font-chalet text-[0.62rem] uppercase tracking-[0.22em] text-zinc-300/80 min-[420px]:text-[0.68rem] sm:text-[0.78rem] sm:tracking-[0.34em] lg:text-[0.82rem] lg:tracking-[0.42em]">
                 Secure connection established
               </div>
-              <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
+              <div className="flex justify-center">
+              <div className="inline-flex max-w-full items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
                 <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
-                <span className="font-pricedown text-lg uppercase tracking-[0.16em] text-cyan-200 [text-shadow:0_0_12px_rgba(34,211,238,0.7)] animate-pulse sm:text-xl">
+                <span className="max-w-[190px] truncate text-center font-pricedown text-sm uppercase tracking-[0.12em] text-cyan-200 [text-shadow:0_0_12px_rgba(34,211,238,0.7)] animate-pulse min-[420px]:text-base sm:max-w-[260px] sm:text-lg lg:max-w-[340px] lg:text-xl">
                   {teamName}
                 </span>
               </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-start gap-3 xl:flex-nowrap">
-              <div className="rounded-[1.25rem] bg-[#201c0f] px-4 py-2 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)] sm:px-7">
-                <div className="font-pricedown text-[1.2rem] uppercase tracking-[0.08em] text-amber-300 sm:text-[1.8rem] sm:tracking-[0.1em]">
+            <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:flex xl:flex-nowrap xl:justify-self-end">
+              <div className="rounded-[1.25rem] bg-[#201c0f] px-4 py-3 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)] sm:px-6">
+                <div className="font-pricedown text-[1rem] uppercase tracking-[0.08em] text-amber-300 min-[420px]:text-[1.1rem] sm:text-[1.4rem] lg:text-[1.8rem] sm:tracking-[0.1em]">
                   Total Points
                 </div>
-                <div className="mt-1 font-pricedown text-[1.5rem] leading-none text-white sm:text-[2.4rem]">
+                <div className="mt-1 font-pricedown text-[1.35rem] leading-none text-white min-[420px]:text-[1.5rem] sm:text-[2rem] lg:text-[2.4rem]">
                   {score.toLocaleString()}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <div className="ml-auto rounded-full bg-white p-1">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-600 text-white">
-                    <span className="font-pricedown text-xl leading-none">N</span>
-                  </div>
-                </div>
-                <div className="rounded-[1.35rem] border-4 border-cyan-400 px-3 py-1 text-center sm:px-5 sm:py-1.5">
-                  <div className="font-pricedown text-[1.8rem] leading-none tracking-[0.08em] text-white sm:text-[3rem]">
+                <div className="rounded-[1.35rem] border-4 border-cyan-400 px-3 py-2 text-center sm:px-5 sm:py-1.5">
+                  <div className="font-pricedown text-[1.5rem] leading-none tracking-[0.08em] text-white min-[420px]:text-[1.7rem] sm:text-[2.3rem] lg:text-[3rem]">
                     {timer}
                   </div>
                 </div>
               </div>
             </div>
-          </header>
+          </m.header>
 
-          <main className="grid gap-5 lg:grid-cols-[210px_minmax(0,1fr)]">
+          <main className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)] xl:items-start">
             <aside className="space-y-5">
-              <section className="overflow-hidden bg-[#131313] pb-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
+              <Reveal>
+              <section className="gta-panel overflow-hidden rounded-[2rem] bg-[#131313] pb-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
                 <div className="h-[6px] bg-[#18952d]" />
                 <div className="flex items-center gap-3 px-3 py-4">
                   <div className="text-red-500">
@@ -370,13 +379,13 @@ export default function MissionPage() {
                   </h2>
                 </div>
 
-                <div className="space-y-3 px-3">
+                <Stagger className="space-y-3 px-3">
                   {rosterRows.map((row) => (
-                    <div
+                    <RevealItem
                       key={row.id}
-                      className="flex items-stretch bg-[#242424] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
+                      className="flex items-stretch rounded-[1.35rem] bg-[#242424] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
                     >
-                      <div className="flex w-full items-center gap-2 border-l-2 border-[#ff3a4d] px-2 py-2">
+                      <div className="flex w-full flex-wrap items-center gap-2 border-l-2 border-[#ff3a4d] px-2 py-2 sm:flex-nowrap">
                         <div className="flex h-7 w-7 items-center justify-center border border-white/70 bg-[#1a1a1a] text-white">
                           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
                             <path d="M12 12.2a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2.3c-4.2 0-8 2.4-8 5.6V22h16v-1.9c0-3.2-3.8-5.6-8-5.6Z" />
@@ -390,16 +399,18 @@ export default function MissionPage() {
                             {row.studentId}
                           </div>
                         </div>
-                        <div className="bg-emerald-950 px-3 py-1 text-[0.62rem] uppercase tracking-[0.22em] text-emerald-400">
+                        <div className="ml-auto bg-emerald-950 px-3 py-1 text-[0.56rem] uppercase tracking-[0.18em] text-emerald-400 min-[420px]:text-[0.62rem] min-[420px]:tracking-[0.22em]">
                           Connected
                         </div>
                       </div>
-                    </div>
+                    </RevealItem>
                   ))}
-                </div>
+                </Stagger>
               </section>
+              </Reveal>
 
-              <section className="overflow-hidden bg-[#131313] pb-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
+              <Reveal delay={0.08}>
+              <section className="gta-panel overflow-hidden rounded-[2rem] bg-[#131313] pb-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
                 <div className="h-[6px] bg-[#18952d]" />
                 <div className="px-4 py-4">
                   <div className="flex items-center gap-2">
@@ -414,13 +425,13 @@ export default function MissionPage() {
                   </div>
                 </div>
 
-                <div className="space-y-5 px-4">
+                <Stagger className="space-y-5 px-4">
                   {levels.map((level) => {
                     const isActive = level.status === "active";
                     const isUnlocked = level.status === "unlocked" || level.status === "completed" || isActive;
 
                     return (
-                      <button
+                      <m.button
                         key={level.levelNumber}
                         type="button"
                         onClick={() => isUnlocked && setSelectedLevelNumber(level.levelNumber)}
@@ -428,6 +439,8 @@ export default function MissionPage() {
                           "flex w-full items-start gap-3 text-left transition",
                           isUnlocked ? "cursor-pointer hover:translate-x-0.5" : "cursor-not-allowed opacity-90",
                         ].join(" ")}
+                        whileHover={reduceMotion || !isUnlocked ? undefined : { x: 4 }}
+                        whileTap={reduceMotion || !isUnlocked ? undefined : { scale: 0.99 }}
                       >
                         <div
                           className={[
@@ -466,48 +479,56 @@ export default function MissionPage() {
                             {getBlueprintLabel(level)}
                           </div>
                         </div>
-                      </button>
+                      </m.button>
                     );
                   })}
-                </div>
+                </Stagger>
               </section>
+              </Reveal>
             </aside>
 
             <section className="space-y-5">
+              <Reveal>
               <div className="space-y-1">
-                <div className="font-pricedown text-[2.35rem] uppercase leading-none tracking-[0.12em] text-cyan-400 sm:text-[3.3rem]">
+                <div className="gta-title text-[1.7rem] leading-none text-cyan-400 min-[420px]:text-[2rem] sm:text-[2.6rem] lg:text-[3.3rem]">
                   {formatLevelLabel(selectedLevel.levelNumber)}
                 </div>
                 <div className="h-[4px] bg-[#18952d]" />
               </div>
+              </Reveal>
 
-              <section className="relative min-h-[342px] overflow-hidden bg-[#171717] shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
+              <Reveal delay={0.06}>
+              <HoverPanel className="gta-panel relative min-h-[342px] overflow-hidden rounded-[2.25rem] bg-[#171717] shadow-[0_0_0_1px_rgba(255,255,255,0.03)]" glowClassName="bg-cyan-400/10">
                 <div className="absolute left-0 top-0 h-full w-[14px] bg-[#d8d8d8]" />
                 <div className="absolute left-0 top-0 h-[4px] w-full bg-[#18952d]" />
 
-                <div className="relative ml-auto w-fit rounded-bl-[1.6rem] bg-[#252120] px-4 py-3 sm:absolute sm:right-0 sm:top-0 sm:px-5 sm:py-4">
-                  <div className="font-pricedown text-[1.7rem] uppercase tracking-[0.08em] text-white sm:text-[2rem]">
+                <div className="relative mx-auto mb-2 w-full max-w-fit rounded-[1.35rem] bg-[#252120] px-4 py-3 sm:mx-0 sm:ml-auto sm:w-fit sm:rounded-bl-[1.6rem] sm:rounded-tr-[0] sm:absolute sm:right-0 sm:top-0 sm:mb-0 sm:px-5 sm:py-4">
+                  <div className="font-pricedown text-[1.3rem] uppercase tracking-[0.08em] text-white sm:text-[1.7rem] lg:text-[2rem]">
                     Wanted Level
                   </div>
-                  <div className="mt-1">
+                  <div className="mt-1 flex justify-center sm:justify-start">
                     <StarMeter value={wantedLevel} />
                   </div>
                 </div>
 
                 <div className="flex min-h-[342px] flex-col px-5 py-6 sm:px-8 sm:py-8 sm:pr-44">
-                  <div className="font-pricedown text-[1.55rem] uppercase tracking-[0.08em] text-white sm:text-[2.15rem]">
+                  <div className="font-pricedown text-[1.2rem] uppercase tracking-[0.08em] text-white min-[420px]:text-[1.35rem] sm:text-[1.8rem] lg:text-[2.15rem]">
                     Question-1
                   </div>
-                  <div className="mt-4 max-w-3xl font-chalet text-[0.82rem] uppercase leading-6 tracking-[0.14em] text-zinc-200/90 sm:text-[1rem] sm:leading-8 sm:tracking-[0.24em]">
+                  <div className="mt-4 max-w-3xl font-chalet text-[0.74rem] uppercase leading-5 tracking-[0.1em] text-zinc-200/90 min-[420px]:text-[0.8rem] sm:text-[0.95rem] sm:leading-7 sm:tracking-[0.18em] lg:text-[1rem] lg:leading-8 lg:tracking-[0.24em]">
                     {selectedQuestionBody}
                   </div>
 
-                  <div className="mt-auto max-w-3xl font-chalet text-[0.74rem] uppercase tracking-[0.2em] text-zinc-400 sm:tracking-[0.3em]">
+                  <div className="mt-6 sm:mt-auto max-w-3xl font-chalet text-[0.66rem] uppercase tracking-[0.14em] text-zinc-400 sm:text-[0.74rem] sm:tracking-[0.22em] lg:tracking-[0.3em]">
                     Objective: {selectedObjective}
                   </div>
                 </div>
 
-                <div className="pointer-events-none absolute right-2 top-10 hidden lg:block">
+                <m.div
+                  className="pointer-events-none absolute right-2 top-10 hidden lg:block"
+                  animate={reduceMotion ? undefined : { y: [0, -8, 0] }}
+                  transition={{ duration: 4.6, repeat: Infinity, ease: "easeInOut" }}
+                >
                   <Image
                     src="/assets/images/character4.png"
                     alt="Mission operator"
@@ -518,11 +539,13 @@ export default function MissionPage() {
                   <p className="mt-2 max-w-[180px] text-right font-chalet text-[0.58rem] uppercase leading-5 tracking-[0.35em] text-zinc-400">
                     &quot;Start simple. Focus, and you will get the hang of it&quot;
                   </p>
-                </div>
-              </section>
+                </m.div>
+              </HoverPanel>
+              </Reveal>
 
-              <section className="min-h-[94px] bg-[#171717] px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] sm:px-5">
-                <div className="font-pricedown text-[1.6rem] uppercase leading-none tracking-[0.08em] text-white sm:text-[1.95rem]">
+              <Reveal delay={0.08}>
+              <section className="gta-panel min-h-[94px] rounded-[1.75rem] bg-[#171717] px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] sm:px-5">
+                <div className="font-pricedown text-[1.25rem] uppercase leading-none tracking-[0.08em] text-white min-[420px]:text-[1.4rem] sm:text-[1.75rem] lg:text-[1.95rem]">
                   Answer -1
                 </div>
                 <div className="mt-5 border-b border-white/12 pb-2">
@@ -530,25 +553,27 @@ export default function MissionPage() {
                     value={answer}
                     onChange={(event) => setAnswer(event.target.value)}
                     disabled={answerDisabled}
-                    className="w-full border-0 bg-transparent font-chalet text-[0.95rem] uppercase tracking-[0.2em] text-white outline-none placeholder:text-zinc-600"
+                    className="w-full border-0 bg-transparent font-chalet text-[0.82rem] uppercase tracking-[0.12em] text-white outline-none placeholder:text-zinc-600 min-[420px]:text-[0.9rem] sm:text-[0.95rem] sm:tracking-[0.2em]"
                     placeholder={answerPlaceholder}
                   />
                 </div>
               </section>
+              </Reveal>
 
-              <section className="relative overflow-hidden bg-[#171717] shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
+              <Reveal delay={0.1}>
+              <HoverPanel className="gta-panel relative overflow-hidden rounded-[2rem] bg-[#171717] shadow-[0_0_0_1px_rgba(255,255,255,0.03)]" glowClassName="bg-fuchsia-500/10">
                 <div className="absolute left-0 top-0 h-[4px] w-full bg-[#18952d]" />
                 <div className="grid gap-6 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-start">
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="border-l-4 border-white/90 pl-3">
-                        <div className="font-pricedown text-[1.55rem] uppercase leading-none tracking-[0.08em] text-cyan-400 sm:text-[1.85rem]">
+                        <div className="font-pricedown text-[1.2rem] uppercase leading-none tracking-[0.08em] text-cyan-400 min-[420px]:text-[1.35rem] sm:text-[1.65rem] lg:text-[1.85rem]">
                           Live Intel
                         </div>
                       </div>
                     </div>
 
-                    <div className="min-h-[170px] max-w-2xl font-chalet text-[0.82rem] uppercase leading-6 tracking-[0.14em] text-zinc-200 sm:text-[0.9rem] sm:leading-8 sm:tracking-[0.24em]">
+                    <div className="min-h-[170px] max-w-2xl font-chalet text-[0.72rem] uppercase leading-5 tracking-[0.1em] text-zinc-200 min-[420px]:text-[0.8rem] sm:text-[0.86rem] sm:leading-7 sm:tracking-[0.18em] lg:text-[0.9rem] lg:leading-8 lg:tracking-[0.24em]">
                       {isSelectedLevelLive ? (
                         <>
                           <div>
@@ -563,22 +588,26 @@ export default function MissionPage() {
                       ) : (
                         <>
                           <div>Hints are only streamed for the current live level.</div>
-                          <div className="mt-4 border-t border-white/10 pt-4 text-[0.72rem] tracking-[0.28em] text-zinc-500">
+                          <div className="mt-4 border-t border-white/10 pt-4 text-[0.64rem] tracking-[0.16em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
                             Select the active level to view admin-controlled clue releases.
                           </div>
                         </>
                       )}
-                      <div className="mt-4 text-[0.72rem] tracking-[0.28em] text-zinc-500">
+                      <div className="mt-4 text-[0.64rem] tracking-[0.16em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
                         Penalties: {currentQuestionPayload?.state.scoring.clue1Penalty ?? "-"} / {currentQuestionPayload?.state.scoring.clue2Penalty ?? "-"}
                       </div>
-                      <div className="mt-2 text-[0.72rem] tracking-[0.28em] text-zinc-500">
+                      <div className="mt-2 text-[0.64rem] tracking-[0.16em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
                         Status: {currentQuestionPayload?.state.contestStatus ?? "unknown"} / {currentLevelState?.status ?? "unknown"}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-start lg:justify-end">
-                    <div className="relative h-[190px] w-[150px] overflow-hidden border border-white/10 bg-black/30 shadow-[0_0_24px_rgba(0,0,0,0.45)]">
+                    <m.div
+                      className="relative h-[190px] w-[150px] overflow-hidden rounded-[1.4rem] border border-white/10 bg-black/30 shadow-[0_0_24px_rgba(0,0,0,0.45)]"
+                      animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
+                      transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
+                    >
                       <Image
                         src="/assets/images/map.png"
                         alt="Mission map"
@@ -586,10 +615,11 @@ export default function MissionPage() {
                         sizes="150px"
                         className="object-cover"
                       />
-                    </div>
+                    </m.div>
                   </div>
                 </div>
-              </section>
+              </HoverPanel>
+              </Reveal>
 
               {message ? (
                 <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
@@ -602,17 +632,19 @@ export default function MissionPage() {
                 </div>
               ) : null}
 
-              <div className="flex flex-wrap items-center gap-3 pb-2">
-                <button
+              <div className="flex flex-col items-start gap-3 pb-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <m.button
                   type="button"
                   onClick={handleSubmit}
                   disabled={answerDisabled}
-                  className="rounded-[0.55rem] bg-[#fbbf24] px-5 py-3 font-pricedown text-2xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60 sm:px-6 sm:text-3xl"
+                  className="gta-button gta-glitch w-full rounded-[0.75rem] bg-[#fbbf24] px-5 py-3 font-pricedown text-[1.4rem] uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60 min-[420px]:w-auto min-[420px]:text-[1.65rem] sm:px-6 sm:text-3xl"
+                  whileHover={reduceMotion || answerDisabled ? undefined : { scale: 1.02 }}
+                  whileTap={reduceMotion || answerDisabled ? undefined : { scale: 0.985 }}
                 >
                   {submitting ? "Submitting..." : actionLabel}
-                </button>
+                </m.button>
 
-                <div className="font-chalet text-[0.72rem] uppercase tracking-[0.28em] text-zinc-500">
+                <div className="font-chalet text-[0.64rem] uppercase tracking-[0.14em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
                   {loading
                     ? "Syncing arena..."
                     : currentLevelState?.status === "solved"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { SiteEffects } from "@/components/ui/site-effects";
 import "./globals.css";
 
 const pricedown = localFont({
@@ -35,7 +36,10 @@ export default function RootLayout({
       lang="en"
       className={`${pricedown.variable} ${chalet.variable} ${forresten.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-fuchsia-400/40">
+        <SiteEffects />
+        {children}
+      </body>
     </html>
   );
 }
