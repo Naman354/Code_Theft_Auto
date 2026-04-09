@@ -110,6 +110,7 @@ npm run dev
 | `/api/admin/next-level` | `POST` | Advances the global contest to the next phase. |
 | `/api/admin/seed-levels` | `POST` | Bulk-uploads Level data (Overwrites existing). |
 
+
 #### 1. `GET /api/admin/contest-state`
 **Response:**
 ```json
