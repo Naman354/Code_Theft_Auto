@@ -6,14 +6,28 @@ import { ARENA_LEVELS, type ArenaLevelView } from "@/lib/arena-data";
 import { getAuthenticatedTeamFromRequest } from "@/lib/arena-session";
 
 function buildLevelViews(params: {
+  contestStatus?: "not_started" | "running" | "paused" | "completed";
   teamCurrentLevel?: number;
   contestCurrentLevel?: number;
   teamLevelStates?: Array<{ levelNumber: number; status?: string; lockedScore?: number }>;
 }) {
-  const { teamCurrentLevel = 1, contestCurrentLevel = 1, teamLevelStates = [] } = params;
+  const {
+    contestStatus = "not_started",
+    teamCurrentLevel = 1,
+    contestCurrentLevel = 1,
+    teamLevelStates = [],
+  } = params;
 
   return ARENA_LEVELS.map((level) => {
     const teamLevelState = teamLevelStates.find((state) => state.levelNumber === level.levelNumber);
+
+    if (contestStatus === "not_started") {
+      return {
+        ...level,
+        status: "locked" as const,
+      };
+    }
+
     const isUnlocked = level.levelNumber <= teamCurrentLevel;
     const status: ArenaLevelView["status"] =
       teamLevelState?.status === "solved"
@@ -56,6 +70,7 @@ export async function GET(request: Request) {
             totalLockedScore: team.totalLockedScore,
           },
           levels: buildLevelViews({
+            contestStatus: contestState.status,
             teamCurrentLevel,
             contestCurrentLevel,
             teamLevelStates: team.levelStates as Array<{ levelNumber: number; status?: string; lockedScore?: number }>,
@@ -80,6 +95,7 @@ export async function GET(request: Request) {
         totalLevels: ARENA_LEVELS.length,
       },
       levels: buildLevelViews({
+        contestStatus: "not_started",
         teamCurrentLevel,
         contestCurrentLevel,
       }),

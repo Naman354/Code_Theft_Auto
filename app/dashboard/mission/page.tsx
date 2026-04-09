@@ -1,10 +1,12 @@
 "use client";
 
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { m, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
+import { useToast } from "@/components/ui/toast-provider";
 import { ARENA_LEVELS, formatArenaTime, type ArenaLevelView } from "@/lib/arena-data";
 import {
   fetchCurrentQuestion,
@@ -87,6 +89,7 @@ export default function MissionPage() {
   type CurrentQuestionPayload = Awaited<ReturnType<typeof fetchCurrentQuestion>>;
 
   const reduceMotion = useReducedMotion();
+  const { showToast } = useToast();
   const [teamName, setTeamName] = useState("VANSHIKA");
   const [teamMembers, setTeamMembers] = useState<Array<{ name: string; studentNumber: string }>>([]);
   const [score, setScore] = useState(0);
@@ -97,6 +100,7 @@ export default function MissionPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showSuccessPop, setShowSuccessPop] = useState(false);
   const [currentQuestionPayload, setCurrentQuestionPayload] = useState<CurrentQuestionPayload | null>(null);
 
   const selectedLevel = useMemo(
@@ -216,7 +220,14 @@ export default function MissionPage() {
       });
 
       if ((payload as { isCorrect?: boolean }).isCorrect) {
-        setMessage((payload as { message?: string }).message ?? "Access granted.");
+        const successMessage = (payload as { message?: string }).message ?? "Access granted.";
+        setMessage(successMessage);
+        setShowSuccessPop(true);
+        showToast({
+          title: "Mission Cleared",
+          description: successMessage,
+          tone: "success",
+        });
         setAnswer("");
         const [refreshedLevelsPayload, refreshedQuestionPayload] = await Promise.all([
           fetchArenaLevels(getArenaToken()),
@@ -229,14 +240,57 @@ export default function MissionPage() {
         setCurrentQuestionPayload(refreshedQuestionPayload);
         setScore(refreshedQuestionPayload.state.totalLockedScore ?? score);
       } else {
-        setMessage((payload as { message?: string }).message ?? "Incorrect answer.");
+        const infoMessage = (payload as { message?: string }).message ?? "Incorrect answer.";
+        setMessage(infoMessage);
+        showToast({
+          title: "Access Denied",
+          description: infoMessage,
+          tone: "info",
+        });
       }
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Submission failed.");
+      const submitErrorMessage = submitError instanceof Error ? submitError.message : "Submission failed.";
+      setError(submitErrorMessage);
+      showToast({
+        title: "Transmission Failed",
+        description: submitErrorMessage,
+        tone: "error",
+      });
     } finally {
       setSubmitting(false);
     }
   }
+
+  useEffect(() => {
+    if (!showSuccessPop) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowSuccessPop(false);
+    }, 2400);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [showSuccessPop]);
+
+  useEffect(() => {
+    if (!currentQuestionPayload) {
+      return;
+    }
+
+    if (
+      currentQuestionPayload.state.levelState.status !== "solved" &&
+      currentQuestionPayload.state.contestStatus !== "completed"
+    ) {
+      setMessage(null);
+    }
+  }, [
+    currentQuestionPayload?.state.contestStatus,
+    currentQuestionPayload?.state.currentLevel,
+    currentQuestionPayload?.state.levelState.status,
+  ]);
   const rosterRows = teamMembers.length
     ? teamMembers.map((member, index) => ({
         id: `${member.studentNumber}-${index}`,
@@ -251,12 +305,19 @@ export default function MissionPage() {
         },
       ];
   const activeQuestion = currentQuestionPayload?.currentQuestion;
+  const contestNotStarted = currentQuestionPayload?.state.contestStatus === "not_started";
   const clueOne = isSelectedLevelLive ? activeQuestion?.clue1 : null;
   const clueTwo = isSelectedLevelLive ? activeQuestion?.clue2 : null;
   const selectedQuestionBody =
-    isSelectedLevelLive && activeQuestion?.question ? activeQuestion.question : selectedLevel.description;
+    contestNotStarted
+      ? "The arena is locked. Wait for the admin to start the contest before the first mission goes live."
+      : isSelectedLevelLive && activeQuestion?.question
+        ? activeQuestion.question
+        : selectedLevel.description;
   const selectedObjective =
-    isSelectedLevelLive
+    contestNotStarted
+      ? "Stand by for admin launch."
+      : isSelectedLevelLive
       ? `Live score: ${currentQuestionPayload?.state.scoring.liveScore ?? 0}`
       : selectedLevel.objective;
   const currentTimerState = currentQuestionPayload?.state.timer;
@@ -295,6 +356,78 @@ export default function MissionPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
+      {showSuccessPop ? (
+        <div className="pointer-events-none fixed inset-0 z-[65] flex items-center justify-center px-4 sm:px-6">
+          <m.div
+            className="relative w-full max-w-3xl overflow-hidden rounded-[2.2rem] border border-lime-300/30 bg-[linear-gradient(135deg,rgba(7,12,8,0.96),rgba(10,22,13,0.94)_45%,rgba(8,12,18,0.96))] p-6 text-center shadow-[0_30px_120px_rgba(0,0,0,0.58),0_0_50px_rgba(132,204,22,0.12)] sm:p-8"
+            initial={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.84, y: 28 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: 18 }}
+            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(132,204,22,0.28),transparent_34%),radial-gradient(circle_at_80%_20%,rgba(34,211,238,0.16),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent_40%)]" />
+            <div className="noise-overlay absolute inset-0 opacity-[0.08]" />
+
+            <div className="relative flex flex-col items-center">
+              <div className="mb-4 inline-flex items-center rounded-full border border-lime-300/25 bg-lime-300/10 px-4 py-2">
+                <span className="font-forresten text-[10px] uppercase tracking-[0.45em] text-lime-200 sm:text-xs">
+                  Mission Passed
+                </span>
+              </div>
+
+              <div className="relative flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48">
+                <div className="absolute inset-0 rounded-full bg-lime-400/10 blur-2xl" />
+                <div className="absolute inset-4 rounded-full border border-lime-300/25" />
+                <div className="absolute inset-0 rounded-full border border-cyan-300/15" />
+                <div className="relative h-full w-full">
+                  <DotLottieReact
+                    src="https://lottie.host/8fa82278-f8f6-40a0-ba4d-8c4c56fc4fdc/3WrLopYzDw.lottie"
+                    loop={false}
+                    autoplay
+                  />
+                </div>
+              </div>
+
+              <div className="relative mt-2">
+                <div className="gta-title text-[2rem] leading-none text-lime-300 drop-shadow-[0_0_18px_rgba(132,204,22,0.3)] sm:text-[2.9rem]">
+                  MISSION PASSED
+                </div>
+                <div className="mt-3 font-body text-[0.72rem] uppercase tracking-[0.22em] text-zinc-100 sm:text-sm sm:tracking-[0.3em]">
+                  Crew response accepted. The city just lit up your name.
+                </div>
+              </div>
+
+              <div className="mt-6 grid w-full gap-3 sm:grid-cols-3">
+                <div className="rounded-[1.2rem] border border-white/10 bg-white/5 px-4 py-3">
+                  <div className="font-accent text-[10px] uppercase tracking-[0.35em] text-zinc-500">
+                    Status
+                  </div>
+                  <div className="mt-2 font-display text-xl uppercase tracking-[0.08em] text-lime-300">
+                    Success
+                  </div>
+                </div>
+                <div className="rounded-[1.2rem] border border-white/10 bg-white/5 px-4 py-3">
+                  <div className="font-accent text-[10px] uppercase tracking-[0.35em] text-zinc-500">
+                    Outcome
+                  </div>
+                  <div className="mt-2 font-display text-xl uppercase tracking-[0.08em] text-cyan-300">
+                    Access
+                  </div>
+                </div>
+                <div className="rounded-[1.2rem] border border-white/10 bg-white/5 px-4 py-3">
+                  <div className="font-accent text-[10px] uppercase tracking-[0.35em] text-zinc-500">
+                    Crew
+                  </div>
+                  <div className="mt-2 truncate font-display text-xl uppercase tracking-[0.08em] text-amber-300">
+                    {teamName}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </m.div>
+        </div>
+      ) : null}
+
       <div className="absolute inset-0">
         <Image
           src="/assets/images/background.png"
@@ -428,7 +561,9 @@ export default function MissionPage() {
                 <Stagger className="space-y-5 px-4">
                   {levels.map((level) => {
                     const isActive = level.status === "active";
-                    const isUnlocked = level.status === "unlocked" || level.status === "completed" || isActive;
+                    const isUnlocked =
+                      !contestNotStarted &&
+                      (level.status === "unlocked" || level.status === "completed" || isActive);
 
                     return (
                       <m.button

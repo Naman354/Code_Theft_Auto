@@ -58,6 +58,10 @@ export default function DashboardPage() {
       getFallbackLevels()[0],
     [levels],
   );
+  const canEnterMission =
+    activeLevel?.status === "active" ||
+    activeLevel?.status === "unlocked" ||
+    activeLevel?.status === "completed";
 
   const wantedStars = useMemo(() => {
     const totalLevels = ARENA_LEVELS.length;
@@ -338,12 +342,23 @@ export default function DashboardPage() {
                 {activeLevel.title}
               </h1>
 
-              <m.div whileHover={reduceMotion ? undefined : { scale: 1.02 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }}>
+              <m.div whileHover={reduceMotion || !canEnterMission ? undefined : { scale: 1.02 }} whileTap={reduceMotion || !canEnterMission ? undefined : { scale: 0.98 }}>
               <Link
-                href="/dashboard/mission"
-                className="gta-button gta-glitch mt-8 inline-flex items-center justify-center rounded-[0.6rem] bg-[#fbbf24] px-6 py-3 font-pricedown text-3xl uppercase tracking-[0.08em] text-[#1b1368] transition hover:-translate-y-0.5 hover:bg-amber-300 sm:mt-10 sm:py-4 sm:text-4xl"
+                href={canEnterMission ? "/dashboard/mission" : "#"}
+                aria-disabled={!canEnterMission}
+                onClick={(event) => {
+                  if (!canEnterMission) {
+                    event.preventDefault();
+                  }
+                }}
+                className={[
+                  "gta-button gta-glitch mt-8 inline-flex items-center justify-center rounded-[0.6rem] px-6 py-3 font-pricedown text-3xl uppercase tracking-[0.08em] transition sm:mt-10 sm:py-4 sm:text-4xl",
+                  canEnterMission
+                    ? "bg-[#fbbf24] text-[#1b1368] hover:-translate-y-0.5 hover:bg-amber-300"
+                    : "cursor-not-allowed bg-zinc-700 text-zinc-300 opacity-70",
+                ].join(" ")}
               >
-                Unlock
+                {canEnterMission ? "Unlock" : "Waiting"}
               </Link>
               </m.div>
 
