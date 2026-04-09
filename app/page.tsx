@@ -18,6 +18,7 @@ const navItems = [
 export default function Home() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
+  const landingVideoRef = useRef<HTMLVideoElement | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +76,44 @@ export default function Home() {
 
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const video = landingVideoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    video.currentTime = 0;
+
+    const tryPlay = async () => {
+      try {
+        await video.play();
+      } catch {
+        // Ignore rare autoplay delays for muted inline background video.
+      }
+    };
+
+    const restartVideo = () => {
+      video.currentTime = 0;
+      void tryPlay();
+    };
+
+    const resumeVideo = () => {
+      if (!video.ended) {
+        void tryPlay();
+      }
+    };
+
+    video.addEventListener("ended", restartVideo);
+    video.addEventListener("pause", resumeVideo);
+    void tryPlay();
+
+    return () => {
+      video.removeEventListener("ended", restartVideo);
+      video.removeEventListener("pause", resumeVideo);
     };
   }, []);
 
@@ -143,13 +182,25 @@ export default function Home() {
   return (
     <div className="min-h-screen overflow-hidden bg-black text-white">
       <div className="absolute inset-0">
+        <video
+          ref={landingVideoRef}
+          className="h-full w-full object-cover opacity-30"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        >
+          <source src="/assets/videos/WhatsApp%20Video%202026-04-09%20at%209.36.03%20AM.mp4" type="video/mp4" />
+        </video>
         <Image
           src="/assets/images/background.png"
           alt="Cyberpunk city background"
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-20"
+          className="object-cover opacity-10"
         />
       </div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(236,72,153,0.12),transparent_30%),radial-gradient(circle_at_70%_20%,rgba(34,211,238,0.12),transparent_22%),linear-gradient(180deg,rgba(0,0,0,0.35),rgba(0,0,0,0.92))]" />
@@ -162,14 +213,7 @@ export default function Home() {
           animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
         >
-            <div className="flex items-center gap-3">
-            <div className="gta-glow flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-400/30 bg-white/5 shadow-[0_0_20px_rgba(34,211,238,0.18)]">
-              <div className="flex items-center gap-1">
-                <span className="h-3 w-3 rotate-45 rounded-sm bg-cyan-400" />
-                <span className="h-3 w-3 -rotate-45 rounded-sm bg-rose-500" />
-                <span className="h-3 w-3 rotate-12 rounded-sm bg-lime-400" />
-              </div>
-            </div>
+            <div>
             <div>
               <div className="gta-title text-xs font-semibold text-zinc-100 sm:text-sm">
                 CODE THEFT AUTO
