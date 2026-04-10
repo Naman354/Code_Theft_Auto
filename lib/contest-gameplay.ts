@@ -128,7 +128,7 @@ export async function syncTeamProgressForCurrentLevel(
     levelState.status !== "expired"
   ) {
     levelState.status = "expired";
-    levelState.lockedScore = 0;
+    levelState.lockedScore = 1;
     levelState.expiredAt = now;
     hasChanges = true;
   }
@@ -155,7 +155,7 @@ export async function syncTeamProgressForCurrentLevel(
           submittedAnswer: null,
           submittedAnswerNormalized: null,
           isCorrect: false,
-          lockedScore: 0,
+          lockedScore: 1,
           clue1PenaltyApplied: levelState.clue1PenaltyApplied,
           clue2PenaltyApplied: levelState.clue2PenaltyApplied,
           responseTimeSeconds: scoringSnapshot.responseTimeSeconds,
