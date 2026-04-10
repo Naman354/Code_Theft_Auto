@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
     const [teams, submissionSnapshots] = await Promise.all([
       Team.find({})
-        .select("teamName currentLevel totalLockedScore levelStates")
+        .select("teamName currentLevel totalLockedScore levelStates isDisqualified tabSwitchCount")
         .sort({ totalLockedScore: -1, currentLevel: -1, teamName: 1 })
         .lean(),
       Submission.aggregate([
@@ -52,6 +52,8 @@ export async function GET(request: Request) {
         score: team.totalLockedScore ?? 0,
         penalties: penaltyCount,
         lastSubmissionAt: latestSubmissionByTeam.get(String(team._id)) ?? null,
+        isDisqualified: team.isDisqualified ?? false,
+        tabSwitchCount: team.tabSwitchCount ?? 0,
       };
     });
 

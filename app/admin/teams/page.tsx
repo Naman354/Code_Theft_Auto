@@ -5,7 +5,7 @@ import { AdminBadge } from "@/components/admin/AdminBadge";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminTable } from "@/components/admin/AdminTable";
-import { fetchTeams } from "@/services/arena-api";
+import { fetchTeams, reinstateTeam, toggleTeamBlock } from "@/services/arena-api";
 
 type TeamRow = {
   id: string;
@@ -14,6 +14,8 @@ type TeamRow = {
   score: number;
   penalties: number;
   lastSubmissionAt: string | null;
+  isDisqualified: boolean;
+  tabSwitchCount: number;
 };
 
 type SortBy = "score" | "level" | "penalties" | "name";
@@ -35,6 +37,26 @@ export default function AdminTeamsPage() {
       setError(loadError instanceof Error ? loadError.message : "Failed to fetch teams.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleToggleBlock(team: TeamRow, shouldBlock: boolean) {
+    const action = shouldBlock ? "block" : "unblock";
+    const confirmMsg = shouldBlock 
+      ? `Are you sure you want to MANUALLY BLOCK ${team.teamName}? They will be kicked out immediately.`
+      : `Are you sure you want to unblock ${team.teamName}? They will be able to log in again immediately.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      if (shouldBlock) {
+        await toggleTeamBlock(team.id, true);
+      } else {
+        await reinstateTeam(team.id); 
+      }
+      await loadTeams();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : `Failed to ${action} team.`);
     }
   }
 
@@ -102,6 +124,16 @@ export default function AdminTeamsPage() {
         emptyLabel={loading ? "Loading teams..." : "No teams found."}
         columns={[
           { key: "team", header: "Team Name", render: (row) => row.teamName },
+          {
+            key: "status",
+            header: "Status",
+            render: (row) =>
+              row.isDisqualified ? (
+                <AdminBadge label={`BANNED (${row.tabSwitchCount}/3)` } tone="rose" />
+              ) : (
+                <AdminBadge label="ACTIVE" tone="emerald" />
+              ),
+          },
           { key: "level", header: "Current Level", render: (row) => row.currentLevel },
           { key: "score", header: "Score", render: (row) => row.score.toLocaleString("en-US") },
           { key: "penalties", header: "Penalties", render: (row) => row.penalties },
@@ -112,6 +144,20 @@ export default function AdminTeamsPage() {
               row.lastSubmissionAt
                 ? new Date(row.lastSubmissionAt).toLocaleString("en-US", { hour12: false })
                 : "N/A",
+          },
+          {
+            key: "actions",
+            header: "Actions",
+            render: (row) =>
+              row.isDisqualified ? (
+                <AdminButton tone="cyan" onClick={() => handleToggleBlock(row, false)}>
+                  Unblock
+                </AdminButton>
+              ) : (
+                <AdminButton tone="rose" onClick={() => handleToggleBlock(row, true)}>
+                  Block
+                </AdminButton>
+              ),
           },
         ]}
       />

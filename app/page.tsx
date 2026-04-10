@@ -3,8 +3,8 @@
 import { m, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { type FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { AccessForm } from "@/components/AccessForm";
 import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
 import { fetchRegisteredTeamNames, loginArena, setArenaTeamSnapshot, signupArenaTeam } from "@/services/arena-api";
@@ -20,7 +20,16 @@ const navItems = [
 ];
 
 export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <LandingContent />
+    </Suspense>
+  );
+}
+
+function LandingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const reduceMotion = useReducedMotion();
   const landingVideoRef = useRef<HTMLVideoElement | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -33,6 +42,17 @@ export default function Home() {
     Array.from({ length: MAX_STUDENT_SLOTS }, () => ""),
   );
   const [registeredTeams, setRegisteredTeams] = useState<Array<{ id: string; teamName: string; memberCount: number }>>([]);
+
+  useEffect(() => {
+    const warning = searchParams.get("warning");
+    const count = searchParams.get("count");
+
+    if (warning === "tab_switched") {
+      setError(`Tab switching detected. You have been logged out. Violation count: ${count ?? "1"}/3. Two more and you're out.`);
+    } else if (warning === "session_invalid") {
+      setError("Session invalid or logged in from another device. Please log in again.");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;

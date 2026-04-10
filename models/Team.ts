@@ -64,6 +64,18 @@ const teamSchema = new Schema(
     currentLevel: { type: Number, default: 1 },
     levelStates: { type: [teamLevelStateSchema], default: [] },
     lastLoginAt: { type: Date, default: null },
+    isDisqualified: { type: Boolean, default: false },
+    tabSwitchCount: { type: Number, default: 0, min: 0 },
+    activeSessions: {
+      type: [
+        {
+          sessionId: { type: String, required: true },
+          lastActive: { type: Date, default: Date.now },
+          _id: false,
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

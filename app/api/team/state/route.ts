@@ -26,6 +26,7 @@ export async function GET(request: Request) {
         members: team.members,
         totalLockedScore: team.totalLockedScore,
         currentLevel: team.currentLevel,
+        isDisqualified: team.isDisqualified ?? false,
       },
       state: buildCurrentQuestionState({
         contestState,

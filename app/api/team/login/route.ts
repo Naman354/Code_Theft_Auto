@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getMinPasswordLength } from "@/lib/contest-config";
 import { connectToDatabase } from "@/lib/mongodb";
 import { normalizeTeamName, verifyPassword } from "@/lib/team-auth";
-import { createTeamSessionToken, setTeamSessionCookie } from "@/lib/team-session";
+import { createTeamSessionToken, generateSessionId, setTeamSessionCookie } from "@/lib/team-session";
 import Team from "@/models/Team";
+
+const MAX_DEVICES = 2;
 
 export async function POST(req: Request) {
   try {
@@ -38,15 +40,39 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid team name or password." }, { status: 401 });
     }
 
+    if (team.isDisqualified) {
+      return NextResponse.json(
+        { error: "This team has been disqualified." },
+        { status: 403 },
+      );
+    }
+
+    // Prune stale sessions older than 8 hours
+    const EIGHT_HOURS_MS = 1000 * 60 * 60 * 8;
+    const cutoff = new Date(Date.now() - EIGHT_HOURS_MS);
+    team.activeSessions = (team.activeSessions ?? []).filter(
+      (s: { sessionId: string; lastActive: Date }) => s.lastActive > cutoff,
+    );
+
+    if (team.activeSessions.length >= MAX_DEVICES) {
+      return NextResponse.json(
+        { error: "Device limit reached. This team is already logged in on the maximum number of devices." },
+        { status: 403 },
+      );
+    }
+
+    const sessionId = generateSessionId();
+    team.activeSessions.push({ sessionId, lastActive: new Date() });
     team.lastLoginAt = new Date();
     await team.save();
 
-    await setTeamSessionCookie(team._id.toString());
-    const token = createTeamSessionToken(team._id.toString());
+    await setTeamSessionCookie(team._id.toString(), sessionId);
+    const token = createTeamSessionToken(team._id.toString(), sessionId);
 
     return NextResponse.json({
       success: true,
       token,
+      sessionId,
       team: {
         id: team._id,
         teamName: team.teamName,

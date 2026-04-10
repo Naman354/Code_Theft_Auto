@@ -89,6 +89,8 @@ type AdminTeamsResponse = {
     score: number;
     penalties: number;
     lastSubmissionAt: string | null;
+    isDisqualified: boolean;
+    tabSwitchCount: number;
   }>;
 };
 
@@ -543,4 +545,26 @@ export async function fetchTeams(token?: string | null) {
   });
 
   return parseJsonResponse<AdminTeamsResponse>(response);
+}
+
+export async function reinstateTeam(teamId: string, token?: string | null) {
+  const response = await fetch("/api/admin/teams/reinstate", {
+    method: "POST",
+    headers: getAdminHeaders(token),
+    credentials: "include",
+    body: JSON.stringify({ teamId }),
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
+}
+
+export async function toggleTeamBlock(teamId: string, isBlocked: boolean, token?: string | null) {
+  const response = await fetch("/api/admin/teams/toggle-block", {
+    method: "POST",
+    headers: getAdminHeaders(token),
+    credentials: "include",
+    body: JSON.stringify({ teamId, isBlocked }),
+  });
+
+  return parseJsonResponse<AdminActionResponse>(response);
 }

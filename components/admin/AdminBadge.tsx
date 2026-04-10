@@ -1,6 +1,6 @@
 type AdminBadgeProps = {
   label: string;
-  tone?: "cyan" | "pink" | "emerald" | "amber" | "zinc";
+  tone?: "cyan" | "pink" | "emerald" | "amber" | "zinc" | "rose";
 };
 
 const toneMap: Record<NonNullable<AdminBadgeProps["tone"]>, string> = {
@@ -9,6 +9,7 @@ const toneMap: Record<NonNullable<AdminBadgeProps["tone"]>, string> = {
   emerald: "border-emerald-300/45 bg-emerald-400/10 text-emerald-100",
   amber: "border-amber-300/45 bg-amber-400/10 text-amber-100",
   zinc: "border-zinc-300/45 bg-zinc-400/10 text-zinc-100",
+  rose: "border-rose-400/45 bg-rose-500/10 text-rose-100",
 };
 
 export function AdminBadge({ label, tone = "cyan" }: AdminBadgeProps) {

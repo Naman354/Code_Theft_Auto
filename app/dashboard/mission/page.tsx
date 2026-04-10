@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { GtaLoadingScreen } from "@/components/ui/gta-loading-screen";
+import { AntiCheat } from "@/components/AntiCheat";
 import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
 import { useToast } from "@/components/ui/toast-provider";
 import { ARENA_LEVELS, formatArenaTime, type ArenaLevelView } from "@/lib/arena-data";
@@ -500,6 +501,7 @@ export default function MissionPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
+      <AntiCheat />
       {showSuccessPop ? (
         <div className="pointer-events-none fixed inset-0 z-[65] flex items-center justify-center px-4 sm:px-6">
           <m.div

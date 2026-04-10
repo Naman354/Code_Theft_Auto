@@ -1,4 +1,4 @@
-import { createHmac } from "crypto";
+import { createHmac, randomUUID } from "crypto";
 import { cookies } from "next/headers";
 
 const TEAM_SESSION_COOKIE = "team_session";
@@ -25,17 +25,24 @@ function encodePayload(payload: Record<string, string | number>) {
 function decodePayload(payload: string) {
   return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
     teamId: string;
+    sessionId: string;
     expiresAt: number;
   };
 }
 
-export function createTeamSessionToken(teamId: string) {
+export function createTeamSessionToken(teamId: string, sessionId?: string) {
+  const resolvedSessionId = sessionId ?? randomUUID();
   const payload = encodePayload({
     teamId,
+    sessionId: resolvedSessionId,
     expiresAt: Date.now() + SESSION_DURATION_MS,
   });
 
   return `${payload}.${signPayload(payload)}`;
+}
+
+export function generateSessionId() {
+  return randomUUID();
 }
 
 export function verifyTeamSessionToken(token: string) {
@@ -60,16 +67,19 @@ export function verifyTeamSessionToken(token: string) {
   return decodedPayload;
 }
 
-export async function setTeamSessionCookie(teamId: string) {
+export async function setTeamSessionCookie(teamId: string, sessionId?: string) {
   const cookieStore = await cookies();
+  const resolvedSessionId = sessionId ?? randomUUID();
 
-  cookieStore.set(TEAM_SESSION_COOKIE, createTeamSessionToken(teamId), {
+  cookieStore.set(TEAM_SESSION_COOKIE, createTeamSessionToken(teamId, resolvedSessionId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: SESSION_DURATION_MS / 1000,
   });
+
+  return resolvedSessionId;
 }
 
 export async function clearTeamSessionCookie() {

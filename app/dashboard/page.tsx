@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { AntiCheat } from "@/components/AntiCheat";
 import { GtaLoadingScreen } from "@/components/ui/gta-loading-screen";
 import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
 import { ARENA_LEVELS, type ArenaLevelView } from "@/lib/arena-data";
@@ -167,6 +168,7 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
+      <AntiCheat />
       <div className="absolute inset-0">
         <Image
           src="/assets/images/background.png"
