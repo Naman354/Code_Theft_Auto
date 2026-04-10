@@ -3,6 +3,7 @@ export type ArenaLevelStatus = "locked" | "unlocked" | "active" | "completed";
 export type ArenaLevelDefinition = {
   levelNumber: number;
   title: string;
+  challengeType: "logic" | "coding";
   difficulty: "Easy" | "Medium" | "Hard" | "Extreme";
   duration: string;
   description: string;
@@ -34,17 +35,19 @@ export type ArenaContestSnapshot = {
 export const ARENA_LEVELS: ArenaLevelDefinition[] = [
   {
     levelNumber: 1,
-    title: "LEVEL 1 - ACCESS CODE BREAK",
+    title: "LEVEL 1 - LOGIC GATE",
+    challengeType: "logic",
     difficulty: "Easy",
     duration: "15:00",
-    description: "Crack the gateway passphrase and take the first relay node.",
-    objective: "Break the access code and bootstrap the session.",
-    reward: "Neon access granted",
-    demoAnswer: "ACCESS",
+    description: "Solve the opening logic prompt and unlock the first relay node.",
+    objective: "Read the pattern carefully and submit the final logical answer.",
+    reward: "Logic gate bypassed",
+    demoAnswer: "LOGIC",
   },
   {
     levelNumber: 2,
     title: "LEVEL 2 - LOGIC FIREWALL",
+    challengeType: "coding",
     difficulty: "Medium",
     duration: "15:00",
     description: "Route the correct path through a shifting firewall matrix.",
@@ -55,6 +58,7 @@ export const ARENA_LEVELS: ArenaLevelDefinition[] = [
   {
     levelNumber: 3,
     title: "LEVEL 3 - CODE DECRYPTION",
+    challengeType: "coding",
     difficulty: "Medium",
     duration: "15:00",
     description: "Recover the hidden sequence before the timer burns out.",
@@ -65,6 +69,7 @@ export const ARENA_LEVELS: ArenaLevelDefinition[] = [
   {
     levelNumber: 4,
     title: "LEVEL 4 - DECODING PUZZLE",
+    challengeType: "logic",
     difficulty: "Hard",
     duration: "15:00",
     description: "Unpack the fragments and reconstruct the live signal.",

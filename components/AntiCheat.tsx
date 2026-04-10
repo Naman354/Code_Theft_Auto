@@ -4,7 +4,7 @@ import { AnimatePresence, m } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-const HEARTBEAT_INTERVAL_MS = 8_000;
+const HEARTBEAT_INTERVAL_MS = 15_000;
 
 export function AntiCheat() {
   const router = useRouter();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMinPasswordLength } from "@/lib/contest-config";
 import { connectToDatabase } from "@/lib/mongodb";
+import { applyRateLimit } from "@/lib/request-guard";
 import { normalizeTeamName, verifyPassword } from "@/lib/team-auth";
 import { generateSessionId, setTeamSessionCookie } from "@/lib/team-session";
 import Team from "@/models/Team";
@@ -10,6 +11,16 @@ const MAX_DEVICES = 2;
 // Backward-compatible alias route for older clients.
 export async function POST(request: Request) {
   try {
+    const rateLimitError = applyRateLimit(request, {
+      bucket: "alias-team-login",
+      limit: 20,
+      windowMs: 60_000,
+    });
+
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
     await connectToDatabase();
 
     const body = await request.json().catch(() => ({}));
@@ -44,9 +55,13 @@ export async function POST(request: Request) {
     // Prune stale sessions older than 8 hours
     const EIGHT_HOURS_MS = 1000 * 60 * 60 * 8;
     const cutoff = new Date(Date.now() - EIGHT_HOURS_MS);
-    team.activeSessions = (team.activeSessions ?? []).filter(
-      (s: { sessionId: string; lastActive: Date }) => s.lastActive > cutoff,
-    );
+    const activeSessions = Array.from(team.activeSessions ?? [])
+      .filter((session) => session.lastActive > cutoff)
+      .map((session) => ({
+        sessionId: session.sessionId,
+        lastActive: session.lastActive,
+      }));
+    team.set("activeSessions", activeSessions);
 
     if (team.activeSessions.length >= MAX_DEVICES) {
       return NextResponse.json(
@@ -64,7 +79,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      sessionId,
       team: {
         id: team._id,
         teamName: team.teamName,

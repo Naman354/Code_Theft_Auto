@@ -82,8 +82,9 @@ const teamSchema = new Schema(
   },
 );
 
-// teamSchema.index({ teamName: 1 }, { unique: true });
-// teamSchema.index({ teamNameNormalized: 1 }, { unique: true });
+teamSchema.index({ totalLockedScore: -1, currentLevel: -1, teamName: 1 });
+teamSchema.index({ "members.studentNumber": 1 });
+teamSchema.index({ isDisqualified: 1, teamName: 1 });
 
 type Team = InferSchemaType<typeof teamSchema>;
 

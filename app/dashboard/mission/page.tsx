@@ -298,8 +298,33 @@ export default function MissionPage() {
 
     void loadArenaState();
     const intervalId = window.setInterval(() => {
-      void loadArenaState();
-    }, 5000);
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      void (async () => {
+        try {
+          const questionPayload = await fetchCurrentQuestion(getArenaToken());
+
+          if (cancelled) {
+            return;
+          }
+
+          setCurrentQuestionPayload(questionPayload);
+          if (typeof questionPayload.state.totalLockedScore === "number") {
+            setScore(questionPayload.state.totalLockedScore);
+          }
+
+          if (questionPayload.state.contestStatus === "completed") {
+            window.location.href = "/dashboard";
+          }
+        } catch {
+          if (!cancelled) {
+            setError((currentError) => currentError ?? "Live mission sync was interrupted.");
+          }
+        }
+      })();
+    }, 10000);
 
     return () => {
       cancelled = true;
@@ -447,6 +472,7 @@ export default function MissionPage() {
 
     return buildFallbackSecurityScripts(selectedQuestionBody);
   }, [activeQuestion?.snippets, isSelectedLevelLive, selectedQuestionBody]);
+  const showSecurityScriptPanel = selectedLevel.challengeType === "coding";
   const activeSecurityScript =
     securityScripts.find((snippet) => snippet.language === selectedLanguage) ?? securityScripts[0];
   const currentTimerState = currentQuestionPayload?.state.timer;
@@ -818,52 +844,68 @@ export default function MissionPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-[1.7rem] border border-fuchsia-400/15 bg-[linear-gradient(180deg,rgba(17,8,20,0.96),rgba(7,10,17,0.92))] px-4 py-4 sm:px-5">
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                          <div>
-                            <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-fuchsia-300/75 sm:text-[0.64rem]">
-                              Security Script
+                      {showSecurityScriptPanel ? (
+                        <div className="rounded-[1.7rem] border border-fuchsia-400/15 bg-[linear-gradient(180deg,rgba(17,8,20,0.96),rgba(7,10,17,0.92))] px-4 py-4 sm:px-5">
+                          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                              <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-fuchsia-300/75 sm:text-[0.64rem]">
+                                Security Script
+                              </div>
+                              <div className="mt-2 font-chalet text-[0.6rem] uppercase tracking-[0.22em] text-zinc-500 sm:text-[0.66rem]">
+                                Encrypted pattern loaded. Pick a language and crack the vault.
+                              </div>
                             </div>
-                            <div className="mt-2 font-chalet text-[0.6rem] uppercase tracking-[0.22em] text-zinc-500 sm:text-[0.66rem]">
-                              Encrypted pattern loaded. Pick a language and crack the vault.
+
+                            <div className="flex flex-wrap gap-2">
+                              {securityScripts.map((snippet) => {
+                                const isActiveLanguage = snippet.language === activeSecurityScript?.language;
+
+                                return (
+                                  <button
+                                    key={snippet.language}
+                                    type="button"
+                                    onClick={() => setSelectedLanguage(snippet.language)}
+                                    className={[
+                                      "rounded-full border px-3 py-2 font-chalet text-[0.62rem] uppercase tracking-[0.28em] transition",
+                                      isActiveLanguage
+                                        ? "border-fuchsia-300/50 bg-fuchsia-300/14 text-fuchsia-100 shadow-[0_0_18px_rgba(217,70,239,0.16)]"
+                                        : "border-white/10 bg-white/5 text-zinc-400 hover:border-fuchsia-300/25 hover:text-zinc-200",
+                                    ].join(" ")}
+                                  >
+                                    {LANGUAGE_LABELS[snippet.language]}
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap gap-2">
-                            {securityScripts.map((snippet) => {
-                              const isActiveLanguage = snippet.language === activeSecurityScript?.language;
-
-                              return (
-                                <button
-                                  key={snippet.language}
-                                  type="button"
-                                  onClick={() => setSelectedLanguage(snippet.language)}
-                                  className={[
-                                    "rounded-full border px-3 py-2 font-chalet text-[0.62rem] uppercase tracking-[0.28em] transition",
-                                    isActiveLanguage
-                                      ? "border-fuchsia-300/50 bg-fuchsia-300/14 text-fuchsia-100 shadow-[0_0_18px_rgba(217,70,239,0.16)]"
-                                      : "border-white/10 bg-white/5 text-zinc-400 hover:border-fuchsia-300/25 hover:text-zinc-200",
-                                  ].join(" ")}
-                                >
-                                  {LANGUAGE_LABELS[snippet.language]}
-                                </button>
-                              );
-                            })}
+                          <div className="mt-4 overflow-hidden rounded-[1.45rem] border border-white/10 bg-[#071019] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
+                            <div className="flex items-center justify-between gap-3 border-b border-white/8 bg-black/35 px-4 py-3">
+                              <div className="font-chalet text-[0.58rem] uppercase tracking-[0.34em] text-zinc-400">
+                                encrypted-pattern://mission-{selectedLevel.levelNumber}
+                              </div>
+                              <div className="font-chalet text-[0.58rem] uppercase tracking-[0.3em] text-cyan-300/70">
+                                {activeSecurityScript ? LANGUAGE_LABELS[activeSecurityScript.language] : "Script"}
+                              </div>
+                            </div>
+                            <pre className="overflow-x-auto px-4 py-4 font-mono text-[0.7rem] leading-6 text-cyan-100 sm:text-[0.8rem] sm:leading-7"><code>{activeSecurityScript?.code ?? "// secure script unavailable"}</code></pre>
                           </div>
                         </div>
-
-                        <div className="mt-4 overflow-hidden rounded-[1.45rem] border border-white/10 bg-[#071019] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
-                          <div className="flex items-center justify-between gap-3 border-b border-white/8 bg-black/35 px-4 py-3">
-                            <div className="font-chalet text-[0.58rem] uppercase tracking-[0.34em] text-zinc-400">
-                              encrypted-pattern://mission-{selectedLevel.levelNumber}
-                            </div>
-                            <div className="font-chalet text-[0.58rem] uppercase tracking-[0.3em] text-cyan-300/70">
-                              {activeSecurityScript ? LANGUAGE_LABELS[activeSecurityScript.language] : "Script"}
+                      ) : (
+                        <div className="rounded-[1.7rem] border border-fuchsia-400/15 bg-[linear-gradient(180deg,rgba(17,8,20,0.96),rgba(7,10,17,0.92))] px-4 py-4 sm:px-5">
+                          <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-fuchsia-300/75 sm:text-[0.64rem]">
+                            Logic Brief
+                          </div>
+                          <div className="mt-2 font-chalet text-[0.6rem] uppercase tracking-[0.22em] text-zinc-500 sm:text-[0.66rem]">
+                            This mission is reasoning-based. No code template is needed for this round.
+                          </div>
+                          <div className="mt-4 rounded-[1.45rem] border border-white/10 bg-[#071019] px-4 py-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
+                            <div className="font-chalet text-[0.62rem] uppercase tracking-[0.28em] text-cyan-300/70">
+                              Read the brief, decode the pattern mentally, and submit only the final answer.
                             </div>
                           </div>
-                          <pre className="overflow-x-auto px-4 py-4 font-mono text-[0.7rem] leading-6 text-cyan-100 sm:text-[0.8rem] sm:leading-7"><code>{activeSecurityScript?.code ?? "// secure script unavailable"}</code></pre>
                         </div>
-                      </div>
+                      )}
 
                       <div className="grid gap-4 lg:grid-cols-2">
                         <div className="rounded-[1.7rem] border border-amber-400/12 bg-black/35 px-4 py-4 sm:px-5">

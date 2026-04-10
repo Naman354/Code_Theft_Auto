@@ -97,18 +97,18 @@ export default function AdminTeamsPage() {
         </div>
       ) : null}
 
-      <section className="rounded-2xl border border-cyan-300/20 bg-black/35 p-5 backdrop-blur-xl">
-        <div className="flex flex-wrap gap-3">
+      <section className="rounded-2xl border border-cyan-300/20 bg-black/35 p-4 backdrop-blur-xl sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search Team..."
-            className="min-w-[220px] rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-sm uppercase tracking-[0.14em] text-zinc-100 outline-none transition-all duration-300 focus:border-cyan-300/60 focus:shadow-[0_0_20px_rgba(0,255,255,0.2)]"
+            className="w-full min-w-0 rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-sm uppercase tracking-[0.12em] text-zinc-100 outline-none transition-all duration-300 focus:border-cyan-300/60 focus:shadow-[0_0_20px_rgba(0,255,255,0.2)] sm:min-w-[220px] sm:flex-1 sm:tracking-[0.14em]"
           />
           <select
             value={sortBy}
             onChange={(event) => setSortBy(event.target.value as SortBy)}
-            className="rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-sm uppercase tracking-[0.14em] text-zinc-100 outline-none transition-all duration-300 focus:border-cyan-300/60"
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-sm uppercase tracking-[0.12em] text-zinc-100 outline-none transition-all duration-300 focus:border-cyan-300/60 sm:w-auto sm:min-w-[180px] sm:tracking-[0.14em]"
           >
             <option value="score">Sort: Score</option>
             <option value="level">Sort: Level</option>
@@ -123,13 +123,21 @@ export default function AdminTeamsPage() {
         rowKey={(team) => team.id}
         emptyLabel={loading ? "Loading teams..." : "No teams found."}
         columns={[
-          { key: "team", header: "Team Name", render: (row) => row.teamName },
+          {
+            key: "team",
+            header: "Team Name",
+            render: (row) => (
+              <span className="font-accent text-[0.8rem] tracking-[0.22em] text-cyan-100 sm:text-[0.88rem] sm:tracking-[0.28em]">
+                {row.teamName}
+              </span>
+            ),
+          },
           {
             key: "status",
             header: "Status",
             render: (row) =>
               row.isDisqualified ? (
-                <AdminBadge label={`BANNED (${row.tabSwitchCount}/3)` } tone="rose" />
+                <AdminBadge label={`BANNED ${row.tabSwitchCount}/3`} tone="rose" />
               ) : (
                 <AdminBadge label="ACTIVE" tone="emerald" />
               ),

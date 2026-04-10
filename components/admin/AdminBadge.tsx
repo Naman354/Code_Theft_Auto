@@ -15,7 +15,7 @@ const toneMap: Record<NonNullable<AdminBadgeProps["tone"]>, string> = {
 export function AdminBadge({ label, tone = "cyan" }: AdminBadgeProps) {
   return (
     <span
-      className={`rounded-full border px-3 py-1 font-accent text-[10px] uppercase tracking-[0.28em] ${toneMap[tone]}`}
+      className={`inline-flex max-w-full items-center justify-center whitespace-nowrap rounded-full border px-3 py-1 font-accent text-[10px] uppercase leading-none tracking-[0.18em] sm:tracking-[0.22em] ${toneMap[tone]}`}
     >
       {label}
     </span>

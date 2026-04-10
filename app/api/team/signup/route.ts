@@ -6,8 +6,9 @@ import {
 } from "@/lib/contest-config";
 import { connectToDatabase } from "@/lib/mongodb";
 import { isDuplicateKeyError } from "@/lib/mongoose-errors";
+import { applyRateLimit } from "@/lib/request-guard";
 import { hashPassword, normalizeTeamName } from "@/lib/team-auth";
-import { createTeamSessionToken, setTeamSessionCookie } from "@/lib/team-session";
+import { setTeamSessionCookie } from "@/lib/team-session";
 import TeamModel from "@/models/Team";
 import UserModel from "@/models/User"; // Day 1 Database
 
@@ -57,6 +58,16 @@ function validateSignupBasics(teamName: string, password: string, studentNumbers
 
 export async function POST(req: Request) {
   try {
+    const rateLimitError = applyRateLimit(req, {
+      bucket: "team-signup",
+      limit: 12,
+      windowMs: 60_000,
+    });
+
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
     await connectToDatabase();
 
     const body = await req.json().catch(() => ({}));
@@ -150,12 +161,10 @@ export async function POST(req: Request) {
     );
 
     await setTeamSessionCookie(team._id.toString());
-    const token = createTeamSessionToken(team._id.toString());
 
     return NextResponse.json(
       {
         success: true,
-        token,
         team: {
           id: team._id,
           teamName: team.teamName,

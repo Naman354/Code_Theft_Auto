@@ -1,12 +1,23 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
+import { applyRateLimit } from "@/lib/request-guard";
 import { clearTeamSessionCookie, getTeamSessionFromCookies } from "@/lib/team-session";
 import Team from "@/models/Team";
 
 const MAX_TAB_SWITCHES = 3;
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    const rateLimitError = applyRateLimit(request, {
+      bucket: "tab-switch",
+      limit: 12,
+      windowMs: 60_000,
+    });
+
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
     const session = await getTeamSessionFromCookies();
 
     if (!session?.teamId) {

@@ -9,10 +9,21 @@ import {
 import { getOrCreateContestState } from "@/lib/contest-state";
 import { connectToDatabase } from "@/lib/mongodb";
 import { isDuplicateKeyError } from "@/lib/mongoose-errors";
+import { applyRateLimit } from "@/lib/request-guard";
 import Submission from "@/models/Submission";
 
 export async function POST(req: Request) {
   try {
+    const rateLimitError = applyRateLimit(req, {
+      bucket: "legacy-submit-answer",
+      limit: 40,
+      windowMs: 60_000,
+    });
+
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
     await connectToDatabase();
 
     const team = await getAuthenticatedTeamFromRequest(req);

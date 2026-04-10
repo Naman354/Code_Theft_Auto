@@ -1,7 +1,6 @@
 import type { ArenaLeaderboardEntry, ArenaLevelView } from "@/lib/arena-data";
 
 const ARENA_STORAGE_KEY = "code-theft-arena-token";
-const ADMIN_SECRET_STORAGE_KEY = "code-theft-admin-secret";
 const TEAM_NAME_STORAGE_KEY = "code-theft-arena-name";
 const TEAM_MEMBERS_STORAGE_KEY = "code-theft-arena-members";
 
@@ -214,28 +213,12 @@ export function getArenaTeamMembers() {
   }
 }
 
-export function getStoredAdminSecret() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  return window.localStorage.getItem(ADMIN_SECRET_STORAGE_KEY);
-}
-
 export function setAdminSecret(secret: string) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(ADMIN_SECRET_STORAGE_KEY, secret);
+  void secret;
 }
 
 export function clearAdminSecret() {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.removeItem(ADMIN_SECRET_STORAGE_KEY);
+  return;
 }
 
 export async function loginAdmin(secret: string) {
@@ -243,15 +226,12 @@ export async function loginAdmin(secret: string) {
     method: "POST",
     headers: new Headers({
       "Content-Type": "application/json",
-      "x-admin-secret": secret,
     }),
     credentials: "include",
     body: JSON.stringify({ secret }),
   });
 
-  const payload = await parseJsonResponse<AdminSessionResponse>(response);
-  setAdminSecret(secret);
-  return payload;
+  return parseJsonResponse<AdminSessionResponse>(response);
 }
 
 export async function logoutAdmin() {
@@ -279,14 +259,7 @@ function getArenaHeaders(token?: string | null) {
 }
 
 function getAdminHeaders(token?: string | null) {
-  const headers = getArenaHeaders(token);
-  const adminSecret = getStoredAdminSecret();
-
-  if (adminSecret) {
-    headers.set("x-admin-secret", adminSecret);
-  }
-
-  return headers;
+  return getArenaHeaders(token);
 }
 
 async function parseJsonResponse<T>(response: Response) {
@@ -314,10 +287,6 @@ export async function loginArena(teamName: string, password: string) {
   });
 
   const payload = await parseJsonResponse<LoginResponse>(response);
-
-  if (payload?.token) {
-    setArenaToken(payload.token);
-  }
 
   if (payload?.team) {
     setArenaTeamSnapshot({

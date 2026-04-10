@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
 import { clearAdminSessionCookie, hasValidAdminSecret, setAdminSessionCookie } from "@/lib/admin-session";
+import { applyRateLimit } from "@/lib/request-guard";
 
 export async function POST(request: Request) {
   try {
+    const rateLimitError = applyRateLimit(request, {
+      bucket: "admin-session",
+      limit: 10,
+      windowMs: 60_000,
+    });
+
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
     const body = await request.json().catch(() => ({}));
-    const providedSecret =
-      request.headers.get("x-admin-secret")?.trim() ||
-      (typeof body.secret === "string" ? body.secret.trim() : "");
+    const providedSecret = typeof body.secret === "string" ? body.secret.trim() : "";
 
     if (!hasValidAdminSecret(providedSecret)) {
       return NextResponse.json({ error: "Invalid admin secret." }, { status: 401 });
@@ -30,4 +39,3 @@ export async function DELETE() {
     success: true,
   });
 }
-

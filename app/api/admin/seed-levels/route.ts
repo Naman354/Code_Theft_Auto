@@ -26,8 +26,14 @@ function getDefaultSeedLevels() {
     levelNumber: level.levelNumber,
     question: level.objective,
     answer: level.demoAnswer,
-    clue1: `Hint 1: Focus on ${level.title.split("-").at(-1)?.trim() ?? "the objective"}.`,
-    clue2: `Hint 2: The expected answer resembles ${level.demoAnswer}.`,
+    clue1:
+      level.challengeType === "logic"
+        ? "Hint 1: Treat the prompt as a reasoning puzzle, not as a coding problem."
+        : `Hint 1: Focus on ${level.title.split("-").at(-1)?.trim() ?? "the objective"}.`,
+    clue2:
+      level.challengeType === "logic"
+        ? "Hint 2: Reduce the pattern step by step and submit only the final answer."
+        : `Hint 2: The expected answer resembles ${level.demoAnswer}.`,
   }));
 }
 
