@@ -8,9 +8,9 @@ export function sanitizeInput(input: unknown): string {
   // 1. Force to string to prevent object-based NoSQL injections
   let sanitized = String(input);
 
-  // 2. STRICT ALPHANUMERIC: Remove everything except A-Z, a-z, 0-9
-  // This satisfies the user's request for "no special characters"
-  sanitized = sanitized.replace(/[^a-zA-Z0-9]/g, "");
+  // 2. ALPHA-NUMERIC-SPACE: Remove everything except A-Z, a-z, 0-9, and spaces
+  // This satisfies the user's request: "space me bhi aa sakta hai"
+  sanitized = sanitized.replace(/[^a-zA-Z0-9 ]/g, "");
 
   // 4. Basic XSS prevention: Strip HTML tags
   sanitized = sanitized.replace(/<[^>]*>?/gm, "");
