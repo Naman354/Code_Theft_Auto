@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     const contestState = await getOrCreateContestState();
     const body = await request.json().catch(() => ({}));
-    const submittedAnswer = String(body.answer ?? "").trim();
+    const submittedAnswer = String(body.answer ?? "");
     const requestedLevel = Number(body.levelNumber ?? contestState.currentLevel);
 
     if (!submittedAnswer) {
