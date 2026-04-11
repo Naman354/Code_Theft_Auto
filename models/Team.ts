@@ -76,6 +76,16 @@ const teamSchema = new Schema(
       ],
       default: [],
     },
+    deviceTabSwitches: {
+      type: [
+        {
+          deviceId: { type: String, required: true },
+          count: { type: Number, default: 0 },
+          _id: false,
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,
