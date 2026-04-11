@@ -196,9 +196,9 @@ export default function DashboardPage() {
             <div className="font-chalet text-[0.68rem] uppercase tracking-[0.28em] text-zinc-300/80 sm:text-[0.85rem] sm:tracking-[0.42em]">
               Secure connection established
             </div>
-            <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
+            <div className="inline-flex max-w-full items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
               <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
-              <span className="font-pricedown text-lg uppercase tracking-[0.16em] text-cyan-200 [text-shadow:0_0_12px_rgba(34,211,238,0.7)] animate-pulse sm:text-xl">
+              <span className="max-w-[220px] truncate font-pricedown text-lg uppercase tracking-[0.12em] text-cyan-200 [text-shadow:0_0_12px_rgba(34,211,238,0.7)] animate-pulse sm:max-w-[320px] sm:text-xl">
                 {teamName}
               </span>
             </div>
@@ -396,9 +396,9 @@ export default function DashboardPage() {
           </Reveal>
         </main>
 
-        <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="mt-3 flex items-center justify-between gap-2 sm:gap-3">
           <div className="h-px flex-1 bg-red-500/60" />
-          <div className="text-[0.72rem] uppercase tracking-[0.34em] text-zinc-600">
+          <div className="text-center text-[0.64rem] uppercase tracking-[0.18em] text-zinc-600 sm:text-[0.72rem] sm:tracking-[0.34em]">
             {loading ? "Syncing arena..." : error ? "Fallback state active" : "Ready"}
           </div>
           <div className="h-px flex-1 bg-red-500/60" />

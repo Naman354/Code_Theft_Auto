@@ -14,15 +14,15 @@ export function LeaderboardTable({ rows }: LeaderboardTableProps) {
         {rows.map((row) => (
           <div
             key={`${row.rank}-${row.teamName}`}
-            className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 px-4 py-4 transition hover:bg-lime-400/5 sm:grid-cols-[auto_1fr_auto_auto] sm:gap-4 sm:px-6"
+            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 transition hover:bg-lime-400/5 sm:grid-cols-[auto_1fr_auto_auto] sm:gap-4 sm:px-6"
           >
             <div className="text-sm font-bold text-lime-300">#{row.rank}</div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-zinc-100">{row.teamName}</div>
+              <div className="break-words text-sm font-semibold text-zinc-100 sm:truncate">{row.teamName}</div>
               <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">Level {row.level}</div>
             </div>
             <div className="hidden text-xs uppercase tracking-[0.35em] text-zinc-500 sm:block">Score</div>
-            <div className="text-right text-base font-semibold text-cyan-200 sm:text-lg">
+            <div className="text-right text-sm font-semibold text-cyan-200 sm:text-lg">
               {row.score.toLocaleString()}
             </div>
           </div>

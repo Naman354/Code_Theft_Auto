@@ -15,6 +15,8 @@ type TeamLevelState = {
   clue2PenaltyAppliedAt: Date | null;
 };
 
+export const MIN_POINTS_PER_QUESTION = 250;
+
 function getElapsedSeconds(levelStartedAt: Date | null, now: Date) {
   if (!levelStartedAt) {
     return 0;
@@ -128,7 +130,7 @@ export async function syncTeamProgressForCurrentLevel(
     levelState.status !== "expired"
   ) {
     levelState.status = "expired";
-    levelState.lockedScore = 1;
+    levelState.lockedScore = MIN_POINTS_PER_QUESTION;
     levelState.expiredAt = now;
     hasChanges = true;
   }
@@ -155,7 +157,7 @@ export async function syncTeamProgressForCurrentLevel(
           submittedAnswer: null,
           submittedAnswerNormalized: null,
           isCorrect: false,
-          lockedScore: 1,
+          lockedScore: MIN_POINTS_PER_QUESTION,
           clue1PenaltyApplied: levelState.clue1PenaltyApplied,
           clue2PenaltyApplied: levelState.clue2PenaltyApplied,
           responseTimeSeconds: scoringSnapshot.responseTimeSeconds,
@@ -200,7 +202,7 @@ export function buildCurrentQuestionState(params: {
   const liveScore =
     levelState.status === "solved" || levelState.status === "expired"
       ? levelState.lockedScore
-      : Math.max(0, contestState.maxPointsPerQuestion - timeDecay - cluePenaltyTotal);
+      : Math.max(MIN_POINTS_PER_QUESTION, contestState.maxPointsPerQuestion - timeDecay - cluePenaltyTotal);
 
   return {
     contestStatus: contestState.status,
@@ -272,7 +274,7 @@ export function buildScoringSnapshot(params: {
   const cluePenaltyTotal =
     (levelState.clue1PenaltyApplied ? contestState.clue1Penalty : 0) +
     (levelState.clue2PenaltyApplied ? contestState.clue2Penalty : 0);
-  const liveScore = Math.max(0, contestState.maxPointsPerQuestion - timeDecay - cluePenaltyTotal);
+  const liveScore = Math.max(MIN_POINTS_PER_QUESTION, contestState.maxPointsPerQuestion - timeDecay - cluePenaltyTotal);
 
   return {
     elapsedSeconds,
