@@ -50,23 +50,11 @@ export function AntiCheat() {
       // Developer bypass for tab switching
       if (isDeveloper) return;
 
-      const getDeviceId = () => {
-        if (typeof window === "undefined") return null;
-        let id = localStorage.getItem("cta_device_id");
-        if (!id) {
-          id = "dev_" + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
-          localStorage.setItem("cta_device_id", id);
-        }
-        return id;
-      };
-
       reportingRef.current = true;
 
       try {
         const res = await fetch("/api/team/tab-switch", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ deviceId: getDeviceId() }),
           credentials: "include",
         });
 
