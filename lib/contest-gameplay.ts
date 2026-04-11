@@ -52,7 +52,7 @@ function calculateTimeDecay(elapsedSeconds: number, gracePeriodSeconds: number, 
 
 
 export function normalizeAnswer(value: string) {
-  return value.replace(/\s+/g, " ").toLowerCase();
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 export function getOrCreateTeamLevelState(team: InstanceType<typeof Team>, levelNumber: number) {
