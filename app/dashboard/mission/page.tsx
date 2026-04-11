@@ -630,17 +630,17 @@ export default function MissionPage() {
               </m.div>
             </Link>
 
-            <div className="min-w-0 pt-1 text-center sm:pt-3 space-y-3 xl:px-6 flex items-center justify-center gap-2">
+            <div className="flex min-w-0 flex-col items-center justify-center gap-2 space-y-0 pt-1 text-center sm:pt-3 xl:px-6">
               <div className="gta-title gta-glitch text-[1.2rem] leading-none text-fuchsia-500 drop-shadow-[0_0_12px_rgba(217,70,239,0.55)] min-[420px]:text-[1.45rem] sm:text-[2.1rem] lg:text-[2.7rem]">
                 CODE THEFT ARENA
               </div>
-              <div className="hidden md:block mt-2 font-chalet text-[0.62rem] uppercase tracking-[0.22em] text-zinc-300/80 min-[420px]:text-[0.68rem] sm:text-[0.78rem] sm:tracking-[0.34em] lg:text-[0.82rem] lg:tracking-[0.42em]">
+              <div className="mt-1 hidden font-chalet text-[0.62rem] uppercase tracking-[0.22em] text-zinc-300/80 md:block min-[420px]:text-[0.68rem] sm:text-[0.78rem] sm:tracking-[0.34em] lg:text-[0.82rem] lg:tracking-[0.42em]">
                 Secure connection established
               </div>
               <div className="flex justify-center">
               <div className="inline-flex max-w-full items-center gap-3 rounded-full border border-cyan-400/50 bg-cyan-400/10 px-4 py-2 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
                 <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
-                <span className="max-w-[190px] truncate text-center font-pricedown text-sm uppercase tracking-[0.12em] text-cyan-200 [text-shadow:0_0_12px_rgba(34,211,238,0.7)] animate-pulse min-[420px]:text-base sm:max-w-[260px] sm:text-lg lg:max-w-[340px] lg:text-xl">
+                <span className="max-w-[170px] truncate text-center font-pricedown text-sm uppercase tracking-[0.08em] text-cyan-200 [text-shadow:0_0_12px_rgba(34,211,238,0.7)] animate-pulse min-[420px]:max-w-[220px] min-[420px]:text-base sm:max-w-[260px] sm:text-lg lg:max-w-[340px] lg:text-xl">
                   {teamName}
                 </span>
               </div>
@@ -704,7 +704,7 @@ export default function MissionPage() {
                             {row.studentId}
                           </div>
                         </div>
-                        <div className="ml-auto max-w-[110px] truncate rounded-full bg-emerald-950 px-3 py-1 font-chalet text-[0.56rem] uppercase tracking-[0.14em] text-emerald-300 min-[420px]:max-w-[130px] min-[420px]:text-[0.62rem] min-[420px]:tracking-[0.18em]">
+                        <div className="w-full rounded-full bg-emerald-950 px-3 py-1 text-center font-chalet text-[0.56rem] uppercase tracking-[0.1em] text-emerald-300 min-[420px]:ml-auto min-[420px]:w-auto min-[420px]:max-w-[130px] min-[420px]:truncate min-[420px]:text-[0.62rem] min-[420px]:tracking-[0.18em]">
                           {row.name}
                         </div>
                       </div>
@@ -839,7 +839,7 @@ export default function MissionPage() {
                         <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-cyan-300/70 sm:text-[0.64rem]">
                           Mission Brief
                         </div>
-                        <div className="mt-3 whitespace-pre-line font-chalet text-[0.74rem] uppercase leading-6 tracking-[0.16em] text-zinc-200/90 min-[420px]:text-[0.8rem] sm:text-[0.92rem] sm:leading-7 sm:tracking-[0.22em] lg:text-[0.98rem] lg:leading-8">
+                        <div className="mt-3 whitespace-pre-line break-words font-chalet text-[0.74rem] uppercase leading-6 tracking-[0.08em] text-zinc-200/90 min-[420px]:text-[0.8rem] sm:text-[0.92rem] sm:leading-7 sm:tracking-[0.22em] lg:text-[0.98rem] lg:leading-8">
                           {selectedQuestionBody}
                         </div>
                       </div>
@@ -880,8 +880,8 @@ export default function MissionPage() {
                           </div>
 
                           <div className="mt-4 overflow-hidden rounded-[1.45rem] border border-white/10 bg-[#071019] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
-                            <div className="flex items-center justify-between gap-3 border-b border-white/8 bg-black/35 px-4 py-3">
-                              <div className="font-chalet text-[0.58rem] uppercase tracking-[0.34em] text-zinc-400">
+                            <div className="flex flex-col items-start justify-between gap-2 border-b border-white/8 bg-black/35 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
+                              <div className="break-all font-chalet text-[0.58rem] uppercase tracking-[0.16em] text-zinc-400 sm:tracking-[0.34em]">
                                 encrypted-pattern://mission-{selectedLevel.levelNumber}
                               </div>
                               <div className="font-chalet text-[0.58rem] uppercase tracking-[0.3em] text-cyan-300/70">
@@ -909,7 +909,7 @@ export default function MissionPage() {
 
                       <div className="grid gap-4 lg:grid-cols-2">
                         <div className="rounded-[1.7rem] border border-amber-400/12 bg-black/35 px-4 py-4 sm:px-5">
-                          <div className="flex items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
                             <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-amber-300/75 sm:text-[0.64rem]">
                               Clue 1
                             </div>
@@ -917,7 +917,7 @@ export default function MissionPage() {
                               -{currentQuestionPayload?.state.scoring.clue1Penalty ?? "-"} pts
                             </div>
                           </div>
-                          <div className="mt-3 font-chalet text-[0.72rem] uppercase leading-6 tracking-[0.14em] text-zinc-200/90 sm:text-[0.82rem] sm:tracking-[0.18em]">
+                          <div className="mt-3 break-words font-chalet text-[0.72rem] uppercase leading-6 tracking-[0.08em] text-zinc-200/90 sm:text-[0.82rem] sm:tracking-[0.18em]">
                             {isSelectedLevelLive
                               ? clueOne ?? `Locked. Reveals in ${formatArenaTime(countdownToClueOne)} while the timer is running.`
                               : "Select the active level to view clue 1."}
@@ -925,7 +925,7 @@ export default function MissionPage() {
                         </div>
 
                         <div className="rounded-[1.7rem] border border-rose-400/12 bg-black/35 px-4 py-4 sm:px-5">
-                          <div className="flex items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
                             <div className="font-chalet text-[0.58rem] uppercase tracking-[0.38em] text-rose-300/75 sm:text-[0.64rem]">
                               Clue 2
                             </div>
@@ -933,7 +933,7 @@ export default function MissionPage() {
                               -{currentQuestionPayload?.state.scoring.clue2Penalty ?? "-"} pts
                             </div>
                           </div>
-                          <div className="mt-3 font-chalet text-[0.72rem] uppercase leading-6 tracking-[0.14em] text-zinc-200/90 sm:text-[0.82rem] sm:tracking-[0.18em]">
+                          <div className="mt-3 break-words font-chalet text-[0.72rem] uppercase leading-6 tracking-[0.08em] text-zinc-200/90 sm:text-[0.82rem] sm:tracking-[0.18em]">
                             {isSelectedLevelLive
                               ? clueTwo ?? `Locked. Reveals in ${formatArenaTime(countdownToClueTwo)} while the timer is running.`
                               : "Select the active level to view clue 2."}
@@ -981,7 +981,7 @@ export default function MissionPage() {
                     placeholder={answerPlaceholder}
                   />
                 </div>
-                <p className="mt-2 font-sans text-[10px] uppercase tracking-[0.15em] text-cyan-400/60">
+                <p className="mt-2 font-sans text-[10px] uppercase tracking-[0.08em] text-cyan-400/60 sm:tracking-[0.15em]">
                   ℹ️ Only letters, numbers, and spaces are allowed. Special characters are automatically filtered.
                 </p>
               </section>
@@ -1000,7 +1000,7 @@ export default function MissionPage() {
                       </div>
                     </div>
 
-                    <div className="min-h-[170px] max-w-2xl font-chalet text-[0.72rem] uppercase leading-5 tracking-[0.1em] text-zinc-200 min-[420px]:text-[0.8rem] sm:text-[0.86rem] sm:leading-7 sm:tracking-[0.18em] lg:text-[0.9rem] lg:leading-8 lg:tracking-[0.24em]">
+                    <div className="min-h-[170px] max-w-2xl break-words font-chalet text-[0.72rem] uppercase leading-5 tracking-[0.08em] text-zinc-200 min-[420px]:text-[0.8rem] sm:text-[0.86rem] sm:leading-7 sm:tracking-[0.18em] lg:text-[0.9rem] lg:leading-8 lg:tracking-[0.24em]">
                       <div>
                         {isSelectedLevelLive
                           ? "Primary dossier synchronized. Security scripts and clue channels are active inside the question box."
@@ -1060,7 +1060,7 @@ export default function MissionPage() {
                   {submitting ? "Submitting..." : actionLabel}
                 </m.button>
 
-                <div className="font-chalet text-[0.64rem] uppercase tracking-[0.14em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
+                <div className="font-chalet text-[0.64rem] uppercase tracking-[0.08em] text-zinc-500 sm:text-[0.72rem] sm:tracking-[0.24em] lg:tracking-[0.28em]">
                   {loading
                     ? "Syncing arena..."
                     : currentLevelState?.status === "solved"

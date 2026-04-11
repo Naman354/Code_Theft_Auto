@@ -304,7 +304,7 @@ function LandingContent() {
                 <div className="w-full">
                   <div className="mx-auto max-w-5xl">
                     <h1
-                      className="gta-title gta-glitch text-4xl font-black leading-[0.9] text-white sm:text-6xl lg:text-[7.5rem]"
+                      className="gta-title gta-glitch text-4xl font-black leading-[0.9] text-white [text-wrap:balance] sm:text-6xl lg:text-[7.5rem]"
                       style={{
                         WebkitTextStroke: "2px #d946ef",
                         textShadow: "0 0 22px rgba(217,70,239,0.35)",
@@ -316,7 +316,7 @@ function LandingContent() {
 
                   <div className="relative mx-auto mt-5 max-w-6xl">
                     <h2
-                      className="gta-title text-[2rem] font-black leading-none sm:text-[3.3rem] lg:text-[6.2rem]"
+                      className="gta-title text-[2rem] font-black leading-none [text-wrap:balance] sm:text-[3.3rem] lg:text-[6.2rem]"
                       style={{
                         backgroundImage: "url('/assets/images/background.png')",
                         backgroundSize: "cover",
@@ -444,7 +444,7 @@ function LandingContent() {
                         className="gta-panel gta-glow rounded-[2rem] border border-lime-400/20 bg-black/70 p-6 backdrop-blur-xl sm:p-8"
                       >
                         <div className="space-y-2 text-center">
-                          <p className="text-xs uppercase tracking-[0.45em] text-lime-300/60">NEW TEAM REGISTRATION</p>
+                          <p className="text-xs uppercase tracking-[0.28em] text-lime-300/60 sm:tracking-[0.45em]">NEW TEAM REGISTRATION</p>
                           <h2 className="gta-title text-2xl tracking-[0.08em] text-lime-300 sm:text-3xl">CREATE YOUR CREW</h2>
                         </div>
 
@@ -556,7 +556,7 @@ function LandingContent() {
                         <m.button
                           type="submit"
                           disabled={loading}
-                          className="gta-button gta-glitch mt-6 w-full rounded-full border border-lime-300/60 bg-lime-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.35em] text-black transition hover:-translate-y-0.5 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="gta-button gta-glitch mt-6 w-full rounded-full border border-lime-300/60 bg-lime-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.2em] text-black transition hover:-translate-y-0.5 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60 sm:tracking-[0.35em]"
                           whileHover={reduceMotion ? undefined : { scale: 1.01 }}
                           whileTap={reduceMotion ? undefined : { scale: 0.985 }}
                         >
@@ -564,7 +564,7 @@ function LandingContent() {
                         </m.button>
 
                         <div className="mt-6 rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4">
-                          <div className="flex items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
                             <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">Registered Teams</p>
                             <span className="text-[10px] uppercase tracking-[0.35em] text-cyan-300/70">
                               {registeredTeams.length} crews
@@ -575,7 +575,7 @@ function LandingContent() {
                               registeredTeams.map((team) => (
                                 <m.div
                                   key={team.id}
-                                  className="flex items-center justify-between rounded-[1.1rem] border border-cyan-400/10 bg-black/40 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-100"
+                                  className="flex flex-wrap items-center justify-between gap-2 rounded-[1.1rem] border border-cyan-400/10 bg-black/40 px-3 py-2 text-xs uppercase tracking-[0.12em] text-zinc-100 sm:tracking-[0.18em]"
                                   initial={reduceMotion ? false : { opacity: 0, x: -10 }}
                                   animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
                                 >
