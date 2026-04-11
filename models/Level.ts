@@ -4,7 +4,7 @@ const levelSchema = new Schema(
   {
     levelNumber: { type: Number, required: true, unique: true },
     question: { type: String, required: true, trim: true },
-    answer: { type: String, required: true, trim: true },
+    answer: { type: String, required: true },
     snippets: [
   {
     language: { type: String, required: true }, // 'python', 'java', 'cpp', 'c'
