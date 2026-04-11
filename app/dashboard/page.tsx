@@ -13,6 +13,7 @@ import {
   fetchArenaLevels,
   fetchArenaTeamState,
   getArenaTeamMembers,
+  getArenaToken,
   setArenaTeamSnapshot,
   logoutArenaTeam,
 } from "@/services/arena-api";
@@ -83,7 +84,8 @@ export default function DashboardPage() {
 
     async function loadArenaSnapshot() {
       try {
-        const [payload, teamPayload] = await Promise.all([fetchArenaLevels(), fetchArenaTeamState()]);
+        const token = getArenaToken();
+        const [payload, teamPayload] = await Promise.all([fetchArenaLevels(token), fetchArenaTeamState(token)]);
         if (cancelled) {
           return;
         }

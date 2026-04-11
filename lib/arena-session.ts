@@ -14,7 +14,7 @@ export function getArenaSessionTokenFromRequest(request: Request) {
   const authorization = request.headers.get("authorization");
   const bearerToken = authorization?.startsWith("Bearer ") ? authorization.slice(7).trim() : null;
   const cookieToken = readCookieValue(request.headers.get("cookie"), "team_session");
-  return cookieToken || bearerToken;
+  return bearerToken || cookieToken;
 }
 
 export function getArenaSessionFromRequest(request: Request) {
@@ -34,24 +34,6 @@ export async function getAuthenticatedTeamFromRequest(request: Request) {
     return null;
   }
 
-  const team = await Team.findById(session.teamId);
-
-  if (!team) {
-    return null;
-  }
-
-  if (!session.sessionId) {
-    return team;
-  }
-
-  const isActiveSession = Array.from(team.activeSessions ?? []).some(
-    (activeSession) => activeSession.sessionId === session.sessionId,
-  );
-
-  if (!isActiveSession) {
-    return null;
-  }
-
-  return team;
+  return Team.findById(session.teamId);
 }
 
