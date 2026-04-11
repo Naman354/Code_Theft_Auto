@@ -6,8 +6,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { AccessForm } from "@/components/AccessForm";
+import { GtaLoadingScreen } from "@/components/ui/gta-loading-screen";
 import { HoverPanel, Reveal, RevealItem, Stagger } from "@/components/ui/motion";
-import { fetchRegisteredTeamNames, loginArena, setArenaTeamSnapshot, signupArenaTeam } from "@/services/arena-api";
+import { fetchArenaTeamState, fetchRegisteredTeamNames, loginArena, setArenaTeamSnapshot, signupArenaTeam } from "@/services/arena-api";
 import character5 from "@/public/assets/images/character5.png";
 
 const MAX_STUDENT_SLOTS = 5;
@@ -42,6 +43,8 @@ function LandingContent() {
     Array.from({ length: MAX_STUDENT_SLOTS }, () => ""),
   );
   const [registeredTeams, setRegisteredTeams] = useState<Array<{ id: string; teamName: string; memberCount: number }>>([]);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [verifyingSession, setVerifyingSession] = useState(true);
 
   useEffect(() => {
     const warning = searchParams.get("warning");
@@ -52,7 +55,23 @@ function LandingContent() {
     } else if (warning === "session_invalid") {
       setError("Session invalid or logged in from another device. Please log in again.");
     }
-  }, [searchParams]);
+
+    // NEW: Robust Session Verification
+    async function verifySession() {
+      try {
+        const response = await fetchArenaTeamState();
+        if (response.success && response.team) {
+          router.replace("/dashboard");
+        } else {
+          setVerifyingSession(false);
+        }
+      } catch {
+        setVerifyingSession(false);
+      }
+    }
+
+    void verifySession();
+  }, [searchParams, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,6 +159,10 @@ function LandingContent() {
 
     // Team Name: Only alphabets, 3-20 characters
     const nameRegex = /^[a-zA-Z]{3,20}$/;
+    if (!registerTeamName) {
+      setError("Team name is required.");
+      return;
+    }
     if (!nameRegex.test(registerTeamName)) {
       setError("Team name must contain only alphabets and be 3 to 20 characters long.");
       return;
@@ -147,6 +170,10 @@ function LandingContent() {
 
     // Password: Alphanumeric only, 3-20 characters
     const passwordRegex = /^[a-zA-Z0-9]{3,20}$/;
+    if (!registerPassword) {
+      setError("Password is required.");
+      return;
+    }
     if (!passwordRegex.test(registerPassword)) {
       setError("Password must contain only letters and numbers, and be 3 to 20 characters long.");
       return;
@@ -195,6 +222,16 @@ function LandingContent() {
   function handleStudentNumberChange(index: number, value: string) {
     setRegisterStudents((current) =>
       current.map((studentNumber, currentIndex) => (currentIndex === index ? value : studentNumber)),
+    );
+  }
+
+  if (verifyingSession) {
+    return (
+      <GtaLoadingScreen
+        eyebrow="Establishing Secure Patch"
+        title="Verifying Signals"
+        subtitle="Checking encrypted bandwidth for existing crew signatures... standby for terminal handshake."
+      />
     );
   }
 
@@ -421,24 +458,46 @@ function LandingContent() {
                               placeholder="e.g. ByteRunners"
                               autoComplete="organization"
                             />
-                            <p className="flex items-center gap-1.5 px-1 pb-1 font-sans text-xs font-medium normal-case tracking-wide text-rose-400">
-                              <span className="text-sm">🚫</span> Required: Only alphabets (3-20 characters).
-                            </p>
+                            {registerTeamName && !/^[a-zA-Z]{3,20}$/.test(registerTeamName) && (
+                              <p className="flex items-center gap-1.5 px-1 pb-1 font-sans text-xs font-medium normal-case tracking-wide text-rose-400">
+                                <span className="text-sm">🚫</span> Format Error: Only alphabets (3-20 characters).
+                              </p>
+                            )}
                           </label>
 
                           <label className="grid gap-2">
                             <span className="text-xs uppercase tracking-[0.35em] text-zinc-400">PASSWORD</span>
-                            <input
-                              value={registerPassword}
-                              onChange={(event) => setRegisterPassword(event.target.value)}
-                              type="password"
-                              className="rounded-2xl border border-lime-400/20 bg-zinc-950/90 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20 focus:shadow-[0_0_22px_rgba(138,255,97,0.14)]"
-                              placeholder="Create strong password"
-                              autoComplete="new-password"
-                            />
-                            <p className="flex items-center gap-1.5 px-1 pb-1 font-sans text-xs font-medium normal-case tracking-wide text-rose-400">
-                              <span className="text-sm">🚫</span> Required: 3-20 chars. Letters & numbers only (no symbols).
-                            </p>
+                            <div className="relative">
+                              <input
+                                value={registerPassword}
+                                onChange={(event) => setRegisterPassword(event.target.value)}
+                                type={showRegisterPassword ? "text" : "password"}
+                                className="w-full rounded-2xl border border-lime-400/20 bg-zinc-950/90 py-3 pl-4 pr-12 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20 focus:shadow-[0_0_22px_rgba(138,255,97,0.14)]"
+                                placeholder="Create strong password"
+                                autoComplete="new-password"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-lime-300"
+                              >
+                                {showRegisterPassword ? (
+                                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                  </svg>
+                                ) : (
+                                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
+                            {registerPassword && !/^[a-zA-Z0-9]{3,20}$/.test(registerPassword) && (
+                              <p className="flex items-center gap-1.5 px-1 pb-1 font-sans text-xs font-medium normal-case tracking-wide text-rose-400">
+                                <span className="text-sm">🚫</span> Format Error: 3-20 chars. Letters & numbers only.
+                              </p>
+                            )}
                           </label>
 
                           <label className="grid gap-2">

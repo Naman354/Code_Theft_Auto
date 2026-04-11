@@ -9,7 +9,7 @@ const HEARTBEAT_INTERVAL_MS = 15_000;
 export function AntiCheat() {
   const router = useRouter();
   const [showWarning, setShowWarning] = useState(false);
-  // Prevent duplicate tab-switch calls from rapid events
+  const [isDeveloper, setIsDeveloper] = useState(false);
   const reportingRef = useRef(false);
 
   useEffect(() => {
@@ -22,9 +22,21 @@ export function AntiCheat() {
           router.replace("/?warning=session_invalid");
           return;
         }
-        const data = (await res.json()) as { team?: { isDisqualified?: boolean } } | undefined;
+        const data = (await res.json()) as { 
+          team?: { 
+            isDisqualified?: boolean;
+            members?: Array<{ studentNumber: string }>;
+          } 
+        } | undefined;
+
         if (data?.team?.isDisqualified) {
           router.replace("/disqualified");
+        }
+
+        // Check if Aditya (2510097) is in this team
+        const hasDevMember = data?.team?.members?.some(m => m.studentNumber === "2510097");
+        if (hasDevMember) {
+          setIsDeveloper(true);
         }
       } catch {
         // Network hiccup — silently ignore
@@ -34,6 +46,9 @@ export function AntiCheat() {
     async function handleTabSwitch() {
       if (document.visibilityState !== "hidden") return;
       if (reportingRef.current) return;
+      
+      // Developer bypass for tab switching
+      if (isDeveloper) return;
 
       reportingRef.current = true;
 
@@ -44,7 +59,6 @@ export function AntiCheat() {
         });
 
         if (!res.ok && res.status !== 200) {
-          // Server error — redirect to home anyway for safety
           router.replace("/?warning=tab_switched");
           return;
         }
@@ -54,32 +68,55 @@ export function AntiCheat() {
         if (data.disqualified) {
           router.replace("/disqualified");
         } else if (data.showWarning) {
-          // Strike 1: Just show the modal warning
           setShowWarning(true);
         } else {
-          // Strike 2: Logout
           router.replace(`/?warning=tab_switched&count=${data.tabSwitchCount ?? "2"}`);
         }
       } catch {
-        // Best-effort: redirect to home if we can't reach the server
         router.replace("/?warning=tab_switched");
       } finally {
         reportingRef.current = false;
       }
     }
 
-    document.addEventListener("visibilitychange", handleTabSwitch);
+    // 🔒 ANTI-INSPECT LOGIC
+    const handleContextMenu = (e: MouseEvent) => {
+      if (!isDeveloper) e.preventDefault();
+    };
 
-    // Heartbeat: detect remote DQ / session invalidation
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (isDeveloper) return;
+
+      const forbiddenKeys = ["F12", "I", "J", "C", "U"];
+      // Block F12
+      if (e.key === "F12") {
+        e.preventDefault();
+        return;
+      }
+
+      // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U
+      if ((e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) || (e.ctrlKey && e.key === "U")) {
+        e.preventDefault();
+        return;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleTabSwitch);
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeydown);
+
+    void checkStatus();
     heartbeatId = setInterval(() => {
       void checkStatus();
     }, HEARTBEAT_INTERVAL_MS);
 
     return () => {
       document.removeEventListener("visibilitychange", handleTabSwitch);
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeydown);
       if (heartbeatId !== null) clearInterval(heartbeatId);
     };
-  }, [router]);
+  }, [router, isDeveloper]);
 
   return (
     <AnimatePresence>
