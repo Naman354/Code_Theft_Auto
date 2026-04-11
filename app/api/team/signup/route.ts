@@ -15,7 +15,7 @@ import UserModel from "@/models/User"; // Day 1 Database
 // Helper to extract clean student numbers from frontend request
 function extractStudentNumbers(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
-  
+
   return input.map(item => {
     // Check if frontend sent array of objects [{studentNumber: "25..."}] or array of strings ["25..."]
     if (typeof item === 'object' && item !== null && 'studentNumber' in item) {
@@ -26,13 +26,18 @@ function extractStudentNumbers(input: unknown): string[] {
 }
 
 function validateSignupBasics(teamName: string, password: string, studentNumbers: string[]) {
-  if (!teamName) return "Team name is required.";
-  if (teamName.length > getMaxTeamNameLength()) {
-    return `Team name must be at most ${getMaxTeamNameLength()} characters long.`;
+  // Team Name: Only alphabets, 3-20 characters
+  const nameRegex = /^[a-zA-Z]{3,20}$/;
+  if (!teamName || teamName.trim().length === 0) return "Team name is required.";
+  if (!nameRegex.test(teamName)) {
+    return "Team name must contain only alphabets and be between 3 and 20 characters long.";
   }
-  if (!password) return "Password is required.";
-  if (password.length < getMinPasswordLength()) {
-    return `Password must be at least ${getMinPasswordLength()} characters long.`;
+
+  // Password: No special symbols, 3-20 characters (alphabets and numbers allowed)
+  const passwordRegex = /^[a-zA-Z0-9]{3,20}$/;
+  if (!password || password.length === 0) return "Password is required.";
+  if (!passwordRegex.test(password)) {
+    return "Password must be alphanumeric (only letters and numbers) and between 3 and 20 characters long.";
   }
   if (studentNumbers.length === 0) return "At least one team member is required.";
 
@@ -73,7 +78,7 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const teamName = String(body.teamName ?? "").trim();
     const password = String(body.password ?? "");
-    
+
     // Extract array of student numbers (e.g. ["2510084", "2510085"])
     // API will accept body.members OR body.studentNumbers from frontend
     const rawMembers = body.studentNumbers || body.members || [];
@@ -88,7 +93,7 @@ export async function POST(req: Request) {
     // =========================================================
     // 🛡️ SECURITY LOGIC: FETCH FROM DAY 1 DB (registrations)
     // =========================================================
-    
+
     // Find these students in Day 1 DB
     const validStudents = await UserModel.find({
       studentNumber: { $in: studentNumbers }
@@ -137,7 +142,7 @@ export async function POST(req: Request) {
 
     // 1. Sabse highest teamNumber wali team dhoondo
     const highestTeam = await TeamModel.findOne().sort({ teamNumber: -1 });
-    
+
     // 2. Agar koi team nahi hai, toh 1 se start karo, warna +1 kar do
     const nextTeamNumber = highestTeam ? highestTeam.teamNumber + 1 : 1;
 
@@ -168,7 +173,7 @@ export async function POST(req: Request) {
         team: {
           id: team._id,
           teamName: team.teamName,
-          members: team.members, 
+          members: team.members,
           totalLockedScore: team.totalLockedScore,
           currentLevel: team.currentLevel,
           levelStates: team.levelStates,
