@@ -8,8 +8,9 @@ export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const sessionToken = request.cookies.get(TEAM_SESSION_COOKIE)?.value;
   const adminSessionToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+  const isProtectedAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
 
-  if (pathname.startsWith("/admin") && !sessionToken && !adminSessionToken) {
+  if (isProtectedAdminRoute && !sessionToken && !adminSessionToken) {
     const redirectResponse = NextResponse.redirect(new URL("/admin-login", request.url));
     redirectResponse.headers.set("X-Frame-Options", "DENY");
     redirectResponse.headers.set("X-Content-Type-Options", "nosniff");
