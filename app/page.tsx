@@ -474,7 +474,8 @@ function LandingContent() {
                                 type={showRegisterPassword ? "text" : "password"}
                                 className="w-full rounded-2xl border border-lime-400/20 bg-zinc-950/90 py-3 pl-4 pr-12 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-lime-300 focus:ring-2 focus:ring-lime-400/20 focus:shadow-[0_0_22px_rgba(138,255,97,0.14)]"
                                 placeholder="Create strong password"
-                                autoComplete="new-password"
+                                autoComplete="off"
+                                spellCheck={false}
                               />
                               <button
                                 type="button"

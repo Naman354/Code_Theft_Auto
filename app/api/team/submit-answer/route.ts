@@ -10,6 +10,7 @@ import { getOrCreateContestState } from "@/lib/contest-state";
 import { connectToDatabase } from "@/lib/mongodb";
 import { isDuplicateKeyError } from "@/lib/mongoose-errors";
 import { applyRateLimit } from "@/lib/request-guard";
+import { sanitizeInput } from "@/lib/security";
 import Submission from "@/models/Submission";
 
 export async function POST(req: Request) {
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const submittedAnswer = String(body.answer ?? "").trim();
+    const submittedAnswer = sanitizeInput(body.answer);
 
     if (!submittedAnswer) {
       return NextResponse.json({ error: "Answer is required." }, { status: 400 });

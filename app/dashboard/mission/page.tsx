@@ -975,12 +975,15 @@ export default function MissionPage() {
                 <div className="mt-5 border-b border-white/12 pb-2">
                   <input
                     value={answer}
-                    onChange={(event) => setAnswer(event.target.value)}
+                    onChange={(event) => setAnswer(event.target.value.replace(/[^a-zA-Z0-9]/g, ""))}
                     disabled={answerDisabled}
                     className="w-full border-0 bg-transparent font-chalet text-[0.82rem] uppercase tracking-[0.12em] text-white outline-none placeholder:text-zinc-600 min-[420px]:text-[0.9rem] sm:text-[0.95rem] sm:tracking-[0.2em]"
                     placeholder={answerPlaceholder}
                   />
                 </div>
+                <p className="mt-2 font-sans text-[10px] uppercase tracking-[0.15em] text-cyan-400/60">
+                  ℹ️ Only letters and numbers are allowed. Special characters and spaces are automatically filtered.
+                </p>
               </section>
               </Reveal>
 
