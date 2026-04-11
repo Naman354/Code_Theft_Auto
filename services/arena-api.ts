@@ -249,10 +249,8 @@ function getArenaHeaders(token?: string | null) {
     "Content-Type": "application/json",
   });
 
-  const storedToken = token ?? getArenaToken();
-
-  if (storedToken) {
-    headers.set("Authorization", `Bearer ${storedToken}`);
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   return headers;
@@ -276,6 +274,8 @@ async function parseJsonResponse<T>(response: Response) {
 }
 
 export async function loginArena(teamName: string, password: string) {
+  clearArenaToken();
+
   const response = await fetch("/api/team/login", {
     method: "POST",
     headers: getArenaHeaders(),
@@ -303,6 +303,8 @@ export async function signupArenaTeam(input: {
   password: string;
   studentNumbers: string[];
 }) {
+  clearArenaToken();
+
   const response = await fetch("/api/team/signup", {
     method: "POST",
     headers: getArenaHeaders(),

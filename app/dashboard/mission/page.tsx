@@ -15,7 +15,6 @@ import {
   fetchArenaLevels,
   fetchArenaTeamState,
   getArenaTeamMembers,
-  getArenaToken,
   setArenaTeamSnapshot,
   submitArenaAnswer,
 } from "@/services/arena-api";
@@ -219,7 +218,6 @@ export default function MissionPage() {
   const wantedLevel = Math.max(1, Math.min(ARENA_LEVELS.length, selectedLevel.levelNumber));
 
   useEffect(() => {
-    const token = getArenaToken();
     const storedName = typeof window === "undefined" ? null : window.sessionStorage.getItem("code-theft-arena-name");
     if (storedName) {
       setTeamName(storedName);
@@ -234,9 +232,9 @@ export default function MissionPage() {
     async function loadArenaState() {
       try {
         const [payload, teamPayload, questionPayload] = await Promise.all([
-          fetchArenaLevels(token),
-          fetchArenaTeamState(token),
-          fetchCurrentQuestion(token),
+          fetchArenaLevels(),
+          fetchArenaTeamState(),
+          fetchCurrentQuestion(),
         ]);
         if (cancelled) {
           return;
@@ -304,7 +302,7 @@ export default function MissionPage() {
 
       void (async () => {
         try {
-          const questionPayload = await fetchCurrentQuestion(getArenaToken());
+          const questionPayload = await fetchCurrentQuestion();
 
           if (cancelled) {
             return;
@@ -345,7 +343,6 @@ export default function MissionPage() {
       const payload = await submitArenaAnswer({
         answer,
         levelNumber: selectedLevel.levelNumber,
-        token: getArenaToken(),
       });
 
       if ((payload as { isCorrect?: boolean }).isCorrect) {
@@ -359,8 +356,8 @@ export default function MissionPage() {
         });
         setAnswer("");
         const [refreshedLevelsPayload, refreshedQuestionPayload] = await Promise.all([
-          fetchArenaLevels(getArenaToken()),
-          fetchCurrentQuestion(getArenaToken()),
+          fetchArenaLevels(),
+          fetchCurrentQuestion(),
         ]);
         const refreshedLevels = (refreshedLevelsPayload as { levels?: ArenaLevelView[] }).levels;
         if (refreshedLevels?.length) {
