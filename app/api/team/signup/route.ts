@@ -27,10 +27,10 @@ function extractStudentNumbers(input: unknown): string[] {
 
 function validateSignupBasics(teamName: string, password: string, studentNumbers: string[]) {
   // Team Name: Only alphabets, 3-20 characters
-  const nameRegex = /^[a-zA-Z]{3,20}$/;
+  const nameRegex = /^[a-zA-Z0-9 ]{3,20}$/;
   if (!teamName || teamName.trim().length === 0) return "Team name is required.";
   if (!nameRegex.test(teamName)) {
-    return "Team name must contain only alphabets and be between 3 and 20 characters long.";
+    return "Team name must contain only letters, numbers, and spaces, and be between 3 and 20 characters long.";
   }
 
   // Password: No special symbols, 3-20 characters (alphabets and numbers allowed)

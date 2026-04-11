@@ -157,14 +157,14 @@ function LandingContent() {
     event.preventDefault();
     setError(null);
 
-    // Team Name: Only alphabets, 3-20 characters
-    const nameRegex = /^[a-zA-Z]{3,20}$/;
+    // Team Name: Letters, numbers, and spaces, 3-20 characters
+    const nameRegex = /^[a-zA-Z0-9 ]{3,20}$/;
     if (!registerTeamName) {
       setError("Team name is required.");
       return;
     }
     if (!nameRegex.test(registerTeamName)) {
-      setError("Team name must contain only alphabets and be 3 to 20 characters long.");
+      setError("Team name must contain only letters, numbers, and spaces, and be 3 to 20 characters long.");
       return;
     }
 
@@ -458,9 +458,9 @@ function LandingContent() {
                               placeholder="e.g. ByteRunners"
                               autoComplete="organization"
                             />
-                            {registerTeamName && !/^[a-zA-Z]{3,20}$/.test(registerTeamName) && (
+                            {registerTeamName && !/^[a-zA-Z0-9 ]{3,20}$/.test(registerTeamName) && (
                               <p className="flex items-center gap-1.5 px-1 pb-1 font-sans text-xs font-medium normal-case tracking-wide text-rose-400">
-                                <span className="text-sm">🚫</span> Format Error: Only alphabets (3-20 characters).
+                                <span className="text-sm">🚫</span> Format Error: Letters, numbers & spaces only (3-20 characters).
                               </p>
                             )}
                           </label>

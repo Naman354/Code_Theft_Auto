@@ -1,4 +1,4 @@
-const DEFAULT_MIN_PASSWORD_LENGTH = 6;
+const DEFAULT_MIN_PASSWORD_LENGTH = 3;
 const DEFAULT_MAX_TEAM_NAME_LENGTH = 80;
 
 function parsePositiveIntegerEnv(name: string) {
