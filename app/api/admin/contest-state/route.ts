@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ensureAdminAccess } from "@/lib/admin-auth";
 import { getOrCreateContestState } from "@/lib/contest-state";
 import { connectToDatabase } from "@/lib/mongodb";
-
+// a simple comment to fix my deployemnt
 export async function GET(request: Request) {
   try {
     const authError = await ensureAdminAccess(request);
